@@ -15,7 +15,7 @@ class SignupScreen extends Component {
   }
 
   signUp(){
-    return fetch('http://127.0.0.1:3333/user',
+    return fetch('http://127.0.0.1:3333/api/1.0.0/user',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -23,7 +23,7 @@ class SignupScreen extends Component {
         first_name: this.state.first_name,
         last_name: this.state.last_name,
         email: this.state.email,
-        password: this.state.password,
+        password: this.state.password
       })
     })
     .then((response) => {
@@ -35,8 +35,8 @@ class SignupScreen extends Component {
   }
 
   handleSignup = () => {
-    const { first_name, email, password } = this.state;
-    if (!first_name || !email || !password) {
+    const { first_name, last_name, email, password } = this.state;
+    if (!first_name || !last_name || !email || !password) {
       this.setState({ error: 'Please fill out all fields.' });
     } else {
       this.signUp();
