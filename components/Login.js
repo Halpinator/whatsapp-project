@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class SignupScreen extends Component {
   
@@ -10,6 +11,23 @@ class SignupScreen extends Component {
         password: '',
         error: ''
     };
+  }
+
+  componentDidMount(){
+    this.unsubscribe = this.props.navigation.addListener('focus', () => {
+      this.checkLoggedIn();
+    });
+  }
+  
+  componentWillUnmount() {
+    this.unsubscribe();
+  }
+
+  checkLoggedIn = async () => {
+    const value = await AsyncStorage.getItem('whatsthat_session_token');
+    if (value != null) {
+      this.props.navigation.navigate('Contactnav')
+    }
   }
 
   login(){
@@ -34,6 +52,18 @@ class SignupScreen extends Component {
             this.setState({ error: 'An error has occured' });
         }
     })
+    .then(async (rJson) => {
+        console.log(rJson)
+        try{
+            await AsyncStorage.setItem("whatsthat_user_id", rJson.id)
+            await AsyncStorage.setItem("whatsthat_session_token", rJson.token)
+            
+            this.props.navigation.navigate('Appnav')
+
+        }catch{
+            throw "Something went wrong"
+        }
+      })
     .catch((error) => {
       console.error(error);
     });

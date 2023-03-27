@@ -35,8 +35,14 @@ class SignupScreen extends Component {
         throw "An error has occured"
       }
     })
+    .then(async (rJson) => {
+      console.log(rJson)
+      this.setState({ error: 'User successfully registered' });
+      this.props.navigation.navigate('login')
+    })
     .catch((error) => {
       console.error(error);
+      this.setState({ error: 'An error has occured' });
     });
   }
 
