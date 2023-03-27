@@ -65,7 +65,7 @@ class ContactsPage extends Component {
     <ContactItem item={item} onPress={this.handleContactPress} />
   );
 
-  async logout(){
+  logout = async () => {
     return fetch('http://127.0.0.1:3333/api/1.0.0/logout',
     {
         method: 'POST',
