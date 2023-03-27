@@ -1,5 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight } from 'react-native';
+import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity } from 'react-native';
 
 const CONTACTS = [
   {
@@ -38,6 +39,8 @@ class ContactItem extends Component {
     const { name, profilePic, messages } = item;
     const lastMessage = messages[messages.length - 1];
 
+    const navigation = this.props.navigation;
+
     return (
       <TouchableHighlight underlayColor="#ddd" onPress={() => onPress(item)}>
         <View style={styles.contactItem}>
@@ -62,7 +65,35 @@ class ContactsPage extends Component {
     <ContactItem item={item} onPress={this.handleContactPress} />
   );
 
+  async logout(){
+    return fetch('http://127.0.0.1:3333/api/1.0.0/logout',
+    {
+        method: 'POST',
+        headers: { 
+          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+        }
+    })
+    .then(async (response) => {
+        if(response.status === 200) {
+            await AsyncStorage.removeItem("whatsthat_session_token")
+            await AsyncStorage.removeItem("whatsthat_session_token")
+            this.props.navigation.navigate('Login')
+        }else if (response.status === 401) {
+            console.log("Unauthorised")
+            await AsyncStorage.removeItem("whatsthat_session_token")
+            await AsyncStorage.removeItem("whatsthat_session_token")
+            this.props.navigation.navigate('Login')
+        }else{
+            this.setState({ error: 'An error has occured' });
+        }
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  }
+
   render() {
+
     return (
       <View style={styles.container}>
         <FlatList
@@ -71,6 +102,9 @@ class ContactsPage extends Component {
           keyExtractor={(item) => item.id.toString()}
           style={styles.contactList}
         />
+        <TouchableOpacity style={styles.button} onPress={this.logout}>
+          <Text style={styles.buttonText}>Logout</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -111,6 +145,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#777',
     marginLeft: 12,
+  },
+  button: {
+    width: '80%',
+    height: 50,
+    backgroundColor: '#007bff',
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 
