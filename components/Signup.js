@@ -27,7 +27,13 @@ class SignupScreen extends Component {
       })
     })
     .then((response) => {
-      Alert.alert("User Added!");
+      if(response.status === 201) {
+        return response.json();
+      }else if (response.status === 400) {
+        throw "Email already exists or password isn't strong enough"
+      }else{
+        throw "An error has occured"
+      }
     })
     .catch((error) => {
       console.error(error);
