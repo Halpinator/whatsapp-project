@@ -1,153 +1,120 @@
 import React, { Component } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 
-//import * as EmailValidator from 'email-validator';
+class SignupScreen extends Component {
+  
+  constructor(props) {
+    super(props);
+    this.state = {
+        email: '',
+        password: '',
+        error: ''
+    };
+  }
 
-export default class Login extends Component {
-
-    constructor(props){
-        super(props);
-
-        this.state = {
-            email: "",
-            password: "",
-            error: "", 
-            submitted: false
+  login(){
+    return fetch('http://127.0.0.1:3333/api/1.0.0/login',
+    {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+        email: this.state.email,
+        password: this.state.password
+      })
+    })
+    .then((response) => {
+        if(response.status === 200) {
+            this.setState({ error: 'Login Successful!' });
+            return response.json();
+        }else if (response.status === 400) {
+            this.setState({ error: 'Incorrect email or passowrd' });
+        }else if (response.status === 500) {
+            this.setState({ error: 'Server error 500' });
+        }else{
+            this.setState({ error: 'An error has occured' });
         }
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  }
 
-        this._onPressButton = this._onPressButton.bind(this)
+  handleLogin = () => {
+    const { email, password } = this.state;
+    if (!email || !password) {
+      this.setState({ error: 'Please fill out all fields.' });
+    } else {
+      this.login();
     }
+  }
 
-    _onPressButton(){
-        this.setState({submitted: true})
-        this.setState({error: ""})
+  render() {
+    const { email, password, error } = this.state;
 
-        if(!(this.state.email && this.state.password)){
-            this.setState({error: "Must enter email and password"})
-            return;
-        }
-
-        //if(!EmailValidator.validate(this.state.email)){
-        //    this.setState({error: "Must enter valid email"})
-        //    return;
-        //}
-
-        const PASSWORD_REGEX = new RegExp("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$")
-        if(!PASSWORD_REGEX.test(this.state.password)){
-            this.setState({error: "Password isn't strong enough (One upper, one lower, one special, one number, at least 8 characters long)"})
-            return;
-        }
-
-
-        console.log("Button clicked: " + this.state.email + " " + this.state.password)
-        console.log("Validated and ready to send to the API")
-
-    }
-
-    render(){
-        return (
-            <View style={styles.container}>
-
-                <View style={styles.formContainer}>
-                    <View style={styles.email}>
-                        <Text>Email</Text>
-                        <TextInput
-                            style={styles.textbox}
-                            placeholder="Enter email"
-                            onChangeText={email => this.setState({email})}
-                            defaultValue={this.state.email}
-                        />
-
-                        <>
-                            {this.state.submitted && !this.state.email &&
-                                <Text style={styles.error}>*Email is required</Text>
-                            }
-                        </>
-                    </View>
-            
-                    <View style={styles.password}>
-                        <Text>Password</Text>
-                        <TextInput
-                            style={styles.textbox}
-                            placeholder="Enter password"
-                            onChangeText={password => this.setState({password})}
-                            defaultValue={this.state.password}
-                            secureTextEntry
-                        />
-
-                        <>
-                            {this.state.submitted && !this.state.password &&
-                                <Text style={styles.error}>*Password is required</Text>
-                            }
-                        </>
-                    </View>
-            
-                    <View style={styles.loginbtn}>
-                        <TouchableOpacity onPress={this._onPressButton}>
-                            <View style={styles.button}>
-                                <Text style={styles.buttonText}>Login</Text>
-                            </View>
-                        </TouchableOpacity>
-                    </View>
-
-                    <>
-                        {this.state.error &&
-                            <Text style={styles.error}>{this.state.error}</Text>
-                        }
-                    </>
-            
-                    <View>
-                        <Text style={styles.signup}>Need an account?</Text>
-                    </View>
-                </View>
-            </View>
-        )
-    }
-
+    return (
+      <View style={styles.container}>
+        <Text style={styles.heading}>Login Page</Text>
+        <TextInput 
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={(value) => this.setState({ email: value })}
+        />
+        <TextInput 
+          style={styles.input}
+          placeholder="Password"
+          secureTextEntry={true}
+          value={password}
+          onChangeText={(value) => this.setState({ password: value })}
+        />
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <TouchableOpacity style={styles.button} onPress={this.handleLogin}>
+          <Text style={styles.buttonText}>Login</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      paddingHorizontal: 30,
-      width: "100%",
-      alignItems: "stretch",
-      justifyContent: "center"
-    },
-    formContainer: {
-  
-    },
-    textbox:{
-      height: 40,
-      borderWidth: 1,
-      width: "100%",
-      borderRadius: 5
-    },
-    email:{
-      marginBottom: 5
-    },
-    password:{
-      marginBottom: 10
-    },
-    loginbtn:{
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  heading: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  input: {
+    width: '80%',
+    height: 50,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  button: {
+    width: '80%',
+    height: 50,
+    backgroundColor: '#007bff',
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  error: {
+    color: 'red',
+    marginBottom: 10,
+  },
+});
 
-    },
-    signup:{
-      justifyContent: "center",
-      textDecorationLine: "underline"
-    },
-    button: {
-      marginBottom: 30,
-      backgroundColor: '#2196F3',
-      borderRadius: 5
-    },
-    buttonText: {
-      textAlign: 'center',
-      padding: 20,
-      color: 'white'
-    },
-    error: {
-        color: "red",
-        fontWeight: '900'
-    }
-  });
+export default SignupScreen;
