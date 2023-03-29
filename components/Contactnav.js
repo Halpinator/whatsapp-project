@@ -130,6 +130,12 @@ class ContactsPage extends Component {
 
     return (
       <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>WhatsThat</Text>
+          <TouchableOpacity style={styles.addButton}>
+            <Text style={styles.addButtonText}>Add</Text>
+          </TouchableOpacity>
+        </View>
         <FlatList
           data={CONTACTS}
           renderItem={this.renderContactItem}
@@ -193,6 +199,30 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  addButton: {
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 5,
+  },
+  addButtonText: {
+    fontSize: 16,
+    color: '#007bff',
+    fontWeight: 'bold',
+  },
+  header: {
+    height: 60,
+    backgroundColor: '#007bff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'left',
+    flex: 1,
   },
 });
 
