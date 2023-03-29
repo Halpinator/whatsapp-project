@@ -38,7 +38,7 @@ class SignupScreen extends Component {
     .then(async (rJson) => {
       console.log(rJson)
       this.setState({ error: 'User successfully registered' });
-      this.props.navigation.navigate('login')
+      this.props.navigation.navigate('Login')
     })
     .catch((error) => {
       console.error(error);
@@ -89,6 +89,9 @@ class SignupScreen extends Component {
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <TouchableOpacity style={styles.button} onPress={this.handleSignup}>
           <Text style={styles.buttonText}>Sign Up</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={() => this.props.navigation.navigate('Login')}>
+          <Text style={styles.buttonText}>Login here</Text>
         </TouchableOpacity>
       </View>
     );
