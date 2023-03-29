@@ -135,7 +135,7 @@ class ContactsPage extends Component {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>WhatsThat</Text>
+          <Text style={styles.headerTitle}>WhatsThat Contact Page</Text>
           <TouchableOpacity style={styles.addButton} onPress={this.goToSearch}>
             <Text style={styles.addButtonText}>Add</Text>
           </TouchableOpacity>

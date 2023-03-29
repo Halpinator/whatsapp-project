@@ -35,11 +35,14 @@ class ContactsSearchPage extends Component {
     super(props);
     this.state = {
       userData: [],
+      user_id: '',
     };
   }
 
   handleContactPress = (contact) => {
     // Handle contact press
+    const user_id = contact.user_id;
+    this.addContact(user_id);
   };
 
   renderContactItem = ({ item }) => (
@@ -83,6 +86,25 @@ class ContactsSearchPage extends Component {
     });
   }
 
+  addContact = async (user_id) => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/contact',
+    {
+      method: 'POST',
+      headers: { 
+        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+      },
+      body: JSON.stringify({
+        user_id: user_id,
+      })
+    })
+    .then(async (response) => {
+      console.log(response)
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  }
+
   logout = async () => {
     return fetch('http://127.0.0.1:3333/api/1.0.0/logout',
     {
@@ -116,8 +138,8 @@ class ContactsSearchPage extends Component {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>WhatsThat Search Page</Text>
-          <TouchableOpacity style={styles.addButton}>
-            <Text style={styles.addButtonText}>Add</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => this.props.navigation.goBack()}>
+            <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
         </View>
         <FlatList
@@ -184,12 +206,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  addButton: {
+  backButton: {
     backgroundColor: '#fff',
     padding: 10,
     borderRadius: 5,
   },
-  addButtonText: {
+  backButtonText: {
     fontSize: 16,
     color: '#007bff',
     fontWeight: 'bold',
