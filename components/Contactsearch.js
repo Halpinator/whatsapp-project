@@ -1,29 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import { res } from 'react-email-validator';
 import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity } from 'react-native';
-
-const CONTACTS = [
-  {
-    id: 1,
-    name: 'John Doe',
-    profilePic: 'https://randomuser.me/api/portraits/men/1.jpg',
-    messages: [
-      { id: 1, content: 'Hello there!', time: '10:00 AM' },
-      { id: 2, content: 'How are you?', time: '10:05 AM' },
-      { id: 3, content: 'See you soon!', time: '11:00 AM' },
-    ],
-  },
-  {
-    id: 2,
-    name: 'Jane Smith',
-    profilePic: 'https://randomuser.me/api/portraits/women/2.jpg',
-    messages: [
-      { id: 1, content: 'Hey, what\'s up?', time: '9:00 AM' },
-      { id: 2, content: 'Want to grab lunch?', time: '12:00 PM' },
-    ],
-  },
-];
 
 class ContactItem extends Component {
   constructor(props){
@@ -36,27 +14,30 @@ class ContactItem extends Component {
 
   render() {
     const { item, onPress } = this.props;
-    const { name, profilePic, messages } = item;
-    const lastMessage = messages[messages.length - 1];
+    const { given_name, family_name } = item;
 
     const navigation = this.props.navigation;
 
     return (
       <TouchableHighlight underlayColor="#ddd" onPress={() => onPress(item)}>
         <View style={styles.contactItem}>
-          <Image source={{ uri: profilePic }} style={styles.profilePic} />
           <View style={styles.contactInfo}>
-            <Text style={styles.contactName}>{name}</Text>
-            <Text style={styles.lastMessage}>{lastMessage.content}</Text>
+            <Text style={styles.contactName}>{given_name + " " +  family_name}</Text>
           </View>
-          <Text style={styles.messageTime}>{lastMessage.time}</Text>
         </View>
       </TouchableHighlight>
     );
   }
 }
 
-class ContactsPage extends Component {
+class ContactsSearchPage extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      userData: [],
+    };
+  }
+
   handleContactPress = (contact) => {
     // Handle contact press
   };
@@ -68,7 +49,7 @@ class ContactsPage extends Component {
   componentDidMount(){
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
       this.checkLoggedIn();
-      this.getContacts();
+      this.searchUsers();
     });
   }
   
@@ -83,8 +64,8 @@ class ContactsPage extends Component {
     }
   }
 
-  getContacts = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/contacts',
+  searchUsers = async () => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/search?search_in=all&limit=20&offset=0',
     {
       method: 'GET',
       headers: { 
@@ -93,6 +74,9 @@ class ContactsPage extends Component {
     })
     .then(async (response) => {
       console.log(response)
+      const rJson = await response.json();
+      console.log(rJson);
+      this.setState({ userData: rJson });
     })
     .catch((error) => {
       console.error(error);
@@ -126,24 +110,20 @@ class ContactsPage extends Component {
     });
   }
 
-  goToSearch = () => {
-    this.props.navigation.navigate('Contactsearch')
-  }
-
   render() {
 
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>WhatsThat</Text>
-          <TouchableOpacity style={styles.addButton} onPress={this.goToSearch}>
+          <Text style={styles.headerTitle}>WhatsThat Search Page</Text>
+          <TouchableOpacity style={styles.addButton}>
             <Text style={styles.addButtonText}>Add</Text>
           </TouchableOpacity>
         </View>
         <FlatList
-          data={CONTACTS}
+          data={this.state.userData}
           renderItem={this.renderContactItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.user_id.toString()}
           style={styles.contactList}
         />
         <TouchableOpacity style={styles.button} onPress={this.logout}>
@@ -230,4 +210,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ContactsPage;
+export default ContactsSearchPage;
