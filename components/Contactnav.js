@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
+import { res } from 'react-email-validator';
 import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity } from 'react-native';
 
 const CONTACTS = [
@@ -33,7 +34,6 @@ class ContactItem extends Component {
     }
   }
 
-
   render() {
     const { item, onPress } = this.props;
     const { name, profilePic, messages } = item;
@@ -65,6 +65,40 @@ class ContactsPage extends Component {
     <ContactItem item={item} onPress={this.handleContactPress} />
   );
 
+  componentDidMount(){
+    this.unsubscribe = this.props.navigation.addListener('focus', () => {
+      this.checkLoggedIn();
+      this.getContacts();
+    });
+  }
+  
+  componentWillUnmount() {
+    this.unsubscribe();
+  }
+
+  checkLoggedIn = async () => {
+    const value = await AsyncStorage.getItem('whatsthat_session_token');
+    if (value == null) {
+      this.props.navigation.navigate('Login')
+    }
+  }
+
+  getContacts = async () => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/contacts',
+    {
+      method: 'GET',
+      headers: { 
+        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+      }
+    })
+    .then(async (response) => {
+      console.log(response)
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  }
+
   logout = async () => {
     return fetch('http://127.0.0.1:3333/api/1.0.0/logout',
     {
@@ -76,12 +110,12 @@ class ContactsPage extends Component {
     .then(async (response) => {
         if(response.status === 200) {
             await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_session_token")
+            await AsyncStorage.removeItem("whatsthat_user_id")
             this.props.navigation.navigate('Login')
         }else if (response.status === 401) {
             console.log("Unauthorised")
             await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_session_token")
+            await AsyncStorage.removeItem("whatsthat_user_id")
             this.props.navigation.navigate('Login')
         }else{
             this.setState({ error: 'An error has occured' });
@@ -147,7 +181,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   button: {
-    width: '80%',
+    width: '100%',
     height: 50,
     backgroundColor: '#007bff',
     borderRadius: 5,
