@@ -36,20 +36,17 @@ class ContactItem extends Component {
 
   render() {
     const { item, onPress } = this.props;
-    const { name, profilePic, messages } = item;
-    const lastMessage = messages[messages.length - 1];
+
+    const { first_name, last_name} = item;
 
     const navigation = this.props.navigation;
 
     return (
       <TouchableHighlight underlayColor="#ddd" onPress={() => onPress(item)}>
         <View style={styles.contactItem}>
-          <Image source={{ uri: profilePic }} style={styles.profilePic} />
           <View style={styles.contactInfo}>
-            <Text style={styles.contactName}>{name}</Text>
-            <Text style={styles.lastMessage}>{lastMessage.content}</Text>
+            <Text style={styles.contactName}>{first_name + " " +  last_name}</Text>
           </View>
-          <Text style={styles.messageTime}>{lastMessage.time}</Text>
         </View>
       </TouchableHighlight>
     );
@@ -57,6 +54,14 @@ class ContactItem extends Component {
 }
 
 class ContactsPage extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      userData: [],
+      user_id: '',
+    };
+  }
+
   handleContactPress = (contact) => {
     // Handle contact press
   };
@@ -93,6 +98,9 @@ class ContactsPage extends Component {
     })
     .then(async (response) => {
       console.log(response)
+      const rJson = await response.json();
+      console.log(rJson);
+      this.setState({ userData: rJson });
     })
     .catch((error) => {
       console.error(error);
@@ -141,9 +149,9 @@ class ContactsPage extends Component {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={CONTACTS}
+          data={this.state.userData}
           renderItem={this.renderContactItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.user_id.toString()}
           style={styles.contactList}
         />
         <TouchableOpacity style={styles.button} onPress={this.logout}>
