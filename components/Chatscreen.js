@@ -7,6 +7,7 @@ class ChatScreen extends Component {
     super(props);
     this.state = {
       chat_id: '',
+      user_id: '',
       chatData: '',
       messages: [],
       loading: true,
@@ -16,6 +17,8 @@ class ChatScreen extends Component {
 
   async componentDidMount() {
     const chat_id = await AsyncStorage.getItem("whatsthat_chat_id");
+    const user_id = await AsyncStorage.getItem("whatsthat_user_id");
+    this.setState({ user_id });
     this.setState({ chat_id }, () => {
       this.loadChatData();
       this.loadMessages();
@@ -72,6 +75,7 @@ class ChatScreen extends Component {
 
       if (response.status === 200) {
         const { messages } = await response.json();
+        console.log(messages);
         this.setState({ messages });
       } else if (response.status === 401) {
         console.log("Unauthorised");
@@ -87,21 +91,25 @@ class ChatScreen extends Component {
 
   renderMessage = ({ item }) => {
     const { chatData } = this.state;
+    const { user_id } = this.state;
+
+    console.log(user_id);
+    console.log(item.author.user_id);
+
     if (!chatData) {
       return null;
     }
 
-    const messageStyle = item.author.user_id === chatData.creator.user_id
+    const messageStyle = item.author.user_id === parseInt(user_id)
       ? styles.sentMessage
       : styles.receivedMessage;
-    const messageTextStyle = item.author.user_id === chatData.creator.user_id
+    const messageTextStyle = item.author.user_id === parseInt(user_id)
       ? styles.sentMessageText
       : styles.receivedMessageText;
 
     return (
       <View>
         <View style={messageStyle}>
-          <Text style={messageTextStyle}>Kitti Smells good</Text>
           <Text style={messageTextStyle}>{item.message}</Text>
         </View>
       </View>
@@ -140,6 +148,7 @@ class ChatScreen extends Component {
             data={messages}
             renderItem={this.renderMessage}
             keyExtractor={(item) => item.message_id.toString()}
+            inverted={true}
           />
         </View>
       </View>
@@ -185,7 +194,7 @@ const styles = StyleSheet.create({
   sentMessageText: {
     color: '#000',
     fontSize: 16,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   receivedMessageText: {
     color: '#000',
