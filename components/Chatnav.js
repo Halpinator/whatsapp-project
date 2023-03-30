@@ -14,7 +14,7 @@ class ChatItem extends Component {
 
   render() {
     const { item, onPress } = this.props;
-    const { name } = item;
+    const { name, last_message } = item;
 
     const navigation = this.props.navigation;
 
@@ -23,6 +23,7 @@ class ChatItem extends Component {
         <View style={styles.ChatItem}>
           <View style={styles.contactInfo}>
             <Text style={styles.contactName}>{name}</Text>
+            <Text style={styles.lastMessage}>{last_message.message}</Text>
           </View>
         </View>
       </TouchableHighlight>
@@ -40,9 +41,9 @@ class ChatNavPage extends Component {
     };
   }
 
-  handleChatPress = (contact) => {
-    const user_id = contact.user_id;
-    this.addContact(user_id);
+  handleChatPress = (chat) => {
+    AsyncStorage.setItem("whatsthat_chat_id", chat.chat_id);
+    this.props.navigation.navigate('Chatscreen')
   };
 
   renderChatItem = ({ item }) => (

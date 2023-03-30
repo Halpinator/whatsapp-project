@@ -9,6 +9,7 @@ import Appnav from './components/Appnav'
 import Contactnav from './components/Contactnav'
 import Contactsearch from './components/Contactsearch'
 import Chatnav from './components/Chatnav'
+import Chatscreen from './components/Chatscreen'
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -32,6 +33,7 @@ export default function App() {
         <Stack.Screen name="Signup" component={Signup} />
         <Stack.Screen name="Appnav" component={Appnav} />
         <Stack.Screen name="Apptab" component={AppTab} />
+        <Stack.Screen name="Chatscreen" component={Chatscreen} />
       </Stack.Navigator>
     </NavigationContainer>
   )
