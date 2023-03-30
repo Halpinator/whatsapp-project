@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
 import { Text, View } from 'react-native';
 
+
 export default class Appnav extends Component{
 
   componentDidMount(){
@@ -19,7 +20,7 @@ export default class Appnav extends Component{
     if (value == null) {
       this.props.navigation.navigate('Login')
     }else{
-      this.props.navigation.navigate('Contactnav')
+      this.props.navigation.navigate('Apptab')
     }
   }
 

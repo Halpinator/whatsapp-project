@@ -26,7 +26,7 @@ class SignupScreen extends Component {
   checkLoggedIn = async () => {
     const value = await AsyncStorage.getItem('whatsthat_session_token');
     if (value != null) {
-      this.props.navigation.navigate('Contactnav')
+      this.props.navigation.navigate('Apptab')
     }
   }
 
