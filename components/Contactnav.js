@@ -66,6 +66,7 @@ class ContactsPage extends Component {
     this.state = {
       userData: [],
       user_id: '',
+      selectedContacts: []
     };
   }
 
