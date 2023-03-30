@@ -7,6 +7,7 @@ import Signup from './components/Signup'
 import Appnav from './components/Appnav'
 import Contactnav from './components/Contactnav'
 import Contactsearch from './components/Contactsearch'
+import Chatnav from './components/Chatnav'
 
 const Stack = createNativeStackNavigator();
 
@@ -19,6 +20,7 @@ export default function App() {
         <Stack.Screen name="Appnav" component={Appnav} />
         <Stack.Screen name="Contactnav" component={Contactnav} />
         <Stack.Screen name="Contactsearch" component={Contactsearch} />
+        <Stack.Screen name="Chatnav" component={Chatnav} />
       </Stack.Navigator>
     </NavigationContainer>
   )

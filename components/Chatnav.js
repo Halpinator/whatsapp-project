@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import { res } from 'react-email-validator';
 import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity } from 'react-native';
 
@@ -8,40 +8,13 @@ class ContactItem extends Component {
     super(props);
     this.state ={ 
       isLoading: true,
-      contactListData: [],
-      user_id: ''
+      contactListData: []
     }
-  }
-
-  handleRemoveButton = (contact) => {
-    const user_id = contact.user_id;
-    this.removeContact(user_id).then(() => {
-      this.props.getContacts();
-    });
-  };
-
-  removeContact = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/contact',
-    {
-      method: 'DELETE',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
-    })
-    .then(async (response) => {
-      console.log(response)
-      const rText = await response.text();
-      console.log(rText);
-    })
-    .catch((error) => {
-      console.error(error);
-    });
   }
 
   render() {
     const { item, onPress } = this.props;
-
-    const { first_name, last_name} = item;
+    const { given_name, family_name } = item;
 
     const navigation = this.props.navigation;
 
@@ -49,18 +22,15 @@ class ContactItem extends Component {
       <TouchableHighlight underlayColor="#ddd" onPress={() => onPress(item)}>
         <View style={styles.contactItem}>
           <View style={styles.contactInfo}>
-            <Text style={styles.contactName}>{first_name + " " +  last_name}</Text>
+            <Text style={styles.contactName}>{given_name + " " +  family_name}</Text>
           </View>
-          <TouchableOpacity style={styles.removeButton} onPress={() => this.handleRemoveButton(item)}>
-            <Text style={styles.removeButtonText}>Remove</Text>
-          </TouchableOpacity>
         </View>
       </TouchableHighlight>
     );
   }
 }
 
-class ContactsPage extends Component {
+class ChatNavPage extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -70,17 +40,19 @@ class ContactsPage extends Component {
   }
 
   handleContactPress = (contact) => {
+    // Handle contact press
     const user_id = contact.user_id;
+    this.addContact(user_id);
   };
 
   renderContactItem = ({ item }) => (
-    <ContactItem item={item} onPress={this.handleContactPress} getContacts={this.getContacts} />
+    <ContactItem item={item} onPress={this.handleContactPress} />
   );
 
   componentDidMount(){
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
       this.checkLoggedIn();
-      this.getContacts();
+      this.searchUsers();
     });
   }
   
@@ -95,8 +67,8 @@ class ContactsPage extends Component {
     }
   }
 
-  getContacts = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/contacts',
+  searchUsers = async () => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/search?search_in=all&limit=20&offset=0',
     {
       method: 'GET',
       headers: { 
@@ -104,11 +76,29 @@ class ContactsPage extends Component {
       }
     })
     .then(async (response) => {
-      console.log(response.status)
-      console.log(response.statusText)
+      console.log(response)
       const rJson = await response.json();
       console.log(rJson);
       this.setState({ userData: rJson });
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  }
+
+  addContact = async (user_id) => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/contact',
+    {
+      method: 'POST',
+      headers: { 
+        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+      },
+      body: JSON.stringify({
+        user_id: user_id,
+      })
+    })
+    .then(async (response) => {
+      console.log(response)
     })
     .catch((error) => {
       console.error(error);
@@ -142,18 +132,14 @@ class ContactsPage extends Component {
     });
   }
 
-  goToSearch = () => {
-    this.props.navigation.navigate('Contactsearch')
-  }
-
   render() {
 
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Contacts</Text>
-          <TouchableOpacity style={styles.addButton} onPress={this.goToSearch}>
-            <Text style={styles.addButtonText}>Add</Text>
+          <Text style={styles.headerTitle}>WhatsThat Search Page</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => this.props.navigation.goBack()}>
+            <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
         </View>
         <FlatList
@@ -220,12 +206,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  addButton: {
+  backButton: {
     backgroundColor: '#fff',
     padding: 10,
     borderRadius: 5,
   },
-  addButtonText: {
+  backButtonText: {
     fontSize: 16,
     color: '#007bff',
     fontWeight: 'bold',
@@ -244,16 +230,6 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     flex: 1,
   },
-  removeButton: {
-    backgroundColor: 'red',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 5,
-  },
-  removeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
 });
 
-export default ContactsPage;
+export default ChatNavPage;
