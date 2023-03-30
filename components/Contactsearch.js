@@ -40,7 +40,6 @@ class ContactsSearchPage extends Component {
   }
 
   handleContactPress = (contact) => {
-    // Handle contact press
     const user_id = contact.user_id;
     this.addContact(user_id);
   };
@@ -137,7 +136,7 @@ class ContactsSearchPage extends Component {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>WhatsThat Search Page</Text>
+          <Text style={styles.headerTitle}>Search</Text>
           <TouchableOpacity style={styles.backButton} onPress={() => this.props.navigation.goBack()}>
             <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
