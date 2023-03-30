@@ -153,9 +153,6 @@ class ContactsPage extends Component {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Contacts</Text>
-          <TouchableOpacity style={styles.addButton} onPress={this.goToSearch}>
-            <Text style={styles.addButtonText}>Add</Text>
-          </TouchableOpacity>
         </View>
         <FlatList
           data={this.state.userData}

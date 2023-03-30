@@ -137,9 +137,6 @@ class ContactsSearchPage extends Component {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Search</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => this.props.navigation.goBack()}>
-            <Text style={styles.backButtonText}>Back</Text>
-          </TouchableOpacity>
         </View>
         <FlatList
           data={this.state.userData}
