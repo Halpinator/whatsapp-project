@@ -222,6 +222,11 @@ class ChatScreen extends Component {
     const messageTextStyle = item.author.user_id === parseInt(user_id)
       ? styles.sentMessageText
       : styles.receivedMessageText;
+    const authorName = item.author.user_id !== parseInt(user_id)
+      ? (item.author.first_name + ' ' + item.author.last_name)
+      : null;
+
+    console.log(authorName);
   
     if (item.author.user_id === parseInt(user_id)) {
       return (
@@ -235,6 +240,9 @@ class ChatScreen extends Component {
     } else {
       return (
         <View>
+          {authorName && (
+            <Text style={styles.authorName}>{authorName}</Text>
+          )}
           <TouchableOpacity style={messageStyle}>
             <Text style={messageTextStyle}>{item.message}</Text>
           </TouchableOpacity>
@@ -409,7 +417,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     borderRadius: 20,
     padding: 10,
-    margin: 10,
+    marginLeft: 10,
+    marginRight: 10,
+    marginBottom: 10,
+    marginTop: 5,
     maxWidth: '80%',
   },
   sentMessageText: {
@@ -500,6 +511,12 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+  },
+  authorName: {
+    marginHorizontal: 10,
+    marginTop: 10,
+    fontSize: 12,
+    color: '#aaa',
   },
 });
 
