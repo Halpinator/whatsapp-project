@@ -43,7 +43,7 @@ class ChatNavPage extends Component {
 
   handleChatPress = (chat) => {
     AsyncStorage.setItem("whatsthat_chat_id", chat.chat_id);
-    this.props.navigation.navigate('Chatscreen')
+    this.props.navigation.navigate('Chattab')
   };
 
   renderChatItem = ({ item }) => (

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { StyleSheet, FlatList, View, Text } from 'react-native';
+import { StyleSheet, FlatList, View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView } from 'react-native';
 
 class ChatScreen extends Component {
   constructor(props) {
@@ -10,6 +10,7 @@ class ChatScreen extends Component {
       user_id: '',
       chatData: '',
       messages: [],
+      newMessage: '',
       loading: true,
       error: '',
     };
@@ -89,12 +90,39 @@ class ChatScreen extends Component {
     }
   }
 
+  sendMessages = async () => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/message',
+    {
+        method: 'POST',
+        headers: { 
+          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: this.state.newMessage,
+        })
+    })
+    .then(async (response) => {
+        if(response.status === 200) {
+          this.setState({ newMessage: '' });
+        }else if (response.status === 401) {
+          console.log("Unauthorised")
+        }else{
+          this.setState({ error: 'An error has occured' });
+        }
+        await this.loadMessages();
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  }
+
   renderMessage = ({ item }) => {
     const { chatData } = this.state;
     const { user_id } = this.state;
 
-    console.log(user_id);
-    console.log(item.author.user_id);
+    //console.log(user_id);
+    //console.log(item.author.user_id);
 
     if (!chatData) {
       return null;
@@ -129,29 +157,41 @@ class ChatScreen extends Component {
     const { name, creator, members } = chatData;
 
     return (
-      <View style={styles.container}>
-        <View>
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>{name}</Text>
-          </View>
-          <Text>Created by {creator.first_name} {creator.last_name}</Text>
-          <Text>Members:</Text>
-          <FlatList
-            data={members}
-            renderItem={({ item }) => (
-              <Text>{item.first_name} {item.last_name}</Text>
-            )}
-            keyExtractor={(item) => item.user_id.toString()}
-          />
-          <Text>Messages:</Text>
-          <FlatList
-            data={messages}
-            renderItem={this.renderMessage}
-            keyExtractor={(item) => item.message_id.toString()}
-            inverted={true}
-          />
+      <KeyboardAvoidingView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>{name}</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => this.props.navigation.goBack()}>
+            <Text style={styles.backButtonText}>Go Back</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+        <Text>Created by {creator.first_name} {creator.last_name}</Text>
+        <Text>Members:</Text>
+        <FlatList
+          data={members}
+          renderItem={({ item }) => (
+            <Text>{item.first_name} {item.last_name}</Text>
+          )}
+          keyExtractor={(item) => item.user_id.toString()}
+        />
+        <Text>Messages:</Text>
+        <FlatList
+          data={messages}
+          renderItem={this.renderMessage}
+          keyExtractor={(item) => item.message_id.toString()}
+          inverted={true}
+        />
+        <View style={styles.bottomContainer}>
+          <TextInput
+            style={styles.sendMessageInput}
+            placeholder="Enter message"
+            onChangeText={(text) => this.setState({newMessage: text})}
+            value={this.state.newMessage}
+          />
+          <TouchableOpacity style={styles.sendMessageButton} onPress={() => this.sendMessages()}>
+            <Text style={styles.sendMessageButtonText}>Send</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     );
   }
 }
@@ -205,6 +245,50 @@ const styles = StyleSheet.create({
     color: '#aaa',
     fontSize: 12,
     textAlign: 'right',
+  },
+  backButton: {
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 5,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#007bff',
+    fontWeight: 'bold',
+  },
+  sendMessageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 10,
+  },
+  sendMessageInput: {
+    flex: 1,
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginRight: 10,
+  },
+  sendMessageButton: {
+    height: 50,
+    backgroundColor: '#007bff',
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+  },
+  sendMessageButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  bottomContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 10,
   },
 });
 

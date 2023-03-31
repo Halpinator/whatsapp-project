@@ -24,6 +24,14 @@ function AppTab() {
   );
 }
 
+function ChatTab() {
+  return (
+    <Tab.Navigator screenOptions={{headerShown:false}} initialRouteName="Contactnav">
+      <Tab.Screen name="Chatscreen" component={Chatscreen} options={{ tabBarLabel: 'Chat' }}/>
+    </Tab.Navigator>
+  );
+}
+
 
 export default function App() {
   return (
@@ -33,7 +41,7 @@ export default function App() {
         <Stack.Screen name="Signup" component={Signup} />
         <Stack.Screen name="Appnav" component={Appnav} />
         <Stack.Screen name="Apptab" component={AppTab} />
-        <Stack.Screen name="Chatscreen" component={Chatscreen} />
+        <Stack.Screen name="Chattab" component={ChatTab} />
       </Stack.Navigator>
     </NavigationContainer>
   )
