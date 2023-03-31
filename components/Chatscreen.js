@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { StyleSheet, FlatList, View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView } from 'react-native';
+import { StyleSheet, FlatList, View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Modal } from 'react-native';
 
 class ChatScreen extends Component {
   constructor(props) {
@@ -11,7 +11,10 @@ class ChatScreen extends Component {
       chatData: '',
       messages: [],
       newMessage: '',
+      messageId: '',
       loading: true,
+      modalVisible: false,
+      selectedMessageId: null,
       error: '',
     };
   }
@@ -117,30 +120,110 @@ class ChatScreen extends Component {
     });
   }
 
+  deleteMessages = async (messageId) => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/message/' + messageId, 
+    {
+      method: 'DELETE',
+      headers: {
+        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
+        "Content-Type": "application/json"
+      },
+    })
+      .then(async (response) => {
+        if (response.status === 200) {
+          await this.loadMessages();
+        } else if (response.status === 401) {
+          console.log("Unauthorised")
+        } else {
+          this.setState({ error: 'An error has occurred' });
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
+
   renderMessage = ({ item }) => {
     const { chatData } = this.state;
     const { user_id } = this.state;
-
-    //console.log(user_id);
-    //console.log(item.author.user_id);
-
+  
     if (!chatData) {
       return null;
     }
-
+  
     const messageStyle = item.author.user_id === parseInt(user_id)
       ? styles.sentMessage
       : styles.receivedMessage;
     const messageTextStyle = item.author.user_id === parseInt(user_id)
       ? styles.sentMessageText
       : styles.receivedMessageText;
-
-    return (
-      <View>
-        <View style={messageStyle}>
-          <Text style={messageTextStyle}>{item.message}</Text>
+  
+    if (item.author.user_id === parseInt(user_id)) {
+      return (
+        <View>
+          <TouchableOpacity style={messageStyle} onPress={(event) => this.showOptionsModal(item.message_id, event)}>
+            <Text style={messageTextStyle}>{item.message}</Text>
+            {this.renderOptionsModal(item.message_id, this.state.modalPosition?.x, this.state.modalPosition?.y, this.handleDeleteMessage)}
+          </TouchableOpacity>
         </View>
-      </View>
+      );
+    } else {
+      return (
+        <View>
+          <TouchableOpacity style={messageStyle}>
+            <Text style={messageTextStyle}>{item.message}</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+  };
+
+  showOptionsModal = (messageId, event) => {
+    this.setState({
+      modalVisible: true,
+      selectedMessageId: messageId,
+      modalPosition: { x: event.nativeEvent.pageX, y: event.nativeEvent.pageY },
+      messageId: messageId, 
+    });
+  };
+
+  hideOptionsModal = () => {
+    this.setState({ modalVisible: false, selectedMessageId: null });
+  };
+
+  handleEditMessage = () => {
+    // TODO: Implement edit message functionality
+    this.hideOptionsModal();
+  };
+
+  handleDeleteMessage = (messageId) => {
+    // TODO: Implement delete message functionality
+    this.hideOptionsModal();
+    this.deleteMessages(messageId);
+  };
+
+  renderOptionsModal = (messageId, x, y) => {
+    const { modalVisible, selectedMessageId } = this.state;
+  
+    return (
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible && selectedMessageId === messageId}
+        onRequestClose={this.hideOptionsModal}
+      >
+        <TouchableOpacity onPress={this.hideOptionsModal}>
+          <View style={styles.modalOverlay}></View>
+        </TouchableOpacity>
+        <View style={[styles.modalContainer, { left: x, top: y }]}>
+          <TouchableOpacity style={styles.modalOption} onPress={this.handleEditMessage}>
+            <Text>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.modalOption} onPress={() => this.handleDeleteMessage(messageId)}>
+            <Text>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     );
   };
 
@@ -190,6 +273,7 @@ class ChatScreen extends Component {
           <TouchableOpacity style={styles.sendMessageButton} onPress={() => this.sendMessages()}>
             <Text style={styles.sendMessageButtonText}>Send</Text>
           </TouchableOpacity>
+          {this.renderOptionsModal()}
         </View>
       </KeyboardAvoidingView>
     );
@@ -289,6 +373,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 20,
     marginBottom: 10,
+  },
+  modalContainer: {
+    position: 'absolute',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    elevation: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 5,
+    width: 120,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignSelf: 'flex-end',
+    maxHeight: 80,
+  },
+  modalOption: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    minWidth: 80,
+  },
+  modalOverlay: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
 });
 
