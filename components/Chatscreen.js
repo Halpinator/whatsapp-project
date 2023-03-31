@@ -15,7 +15,11 @@ class ChatScreen extends Component {
       loading: true,
       modalVisible: false,
       selectedMessageId: null,
+      isEditing: false,
+      editingMessageText: '',
+      submitButtonText: 'Send',
       error: '',
+      errorDetails: '',
     };
   }
 
@@ -143,6 +147,39 @@ class ChatScreen extends Component {
       });
   };
 
+  updateMessage = async (messageId) => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/message/' + this.state.editingMessageId,
+    {
+        method: 'PATCH',
+        headers: { 
+          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: this.state.editingMessageText,
+        })
+    })
+    .then(async (response) => {
+        if(response.status === 200) {
+          this.setState({
+            isEditing: false,
+            editingMessageText: '',
+            submitButtonText: 'Send',
+          });
+          console.log("Message updated")
+        }else if (response.status === 401) {
+          console.log("Unauthorised")
+        }else{
+          this.setState({ error: 'An error has occured' });
+          this.setState({errorDetails: `Status: ${response.status}, Status Text: ${response.statusText}`});
+        }
+        await this.loadMessages();
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  };
+
   renderMessage = ({ item }) => {
     const { chatData } = this.state;
     const { user_id } = this.state;
@@ -192,7 +229,16 @@ class ChatScreen extends Component {
   };
 
   handleEditMessage = () => {
-    // TODO: Implement edit message functionality
+    const { messages, selectedMessageId } = this.state;
+    const messageToEdit = messages.find((message) => message.message_id === selectedMessageId);
+  
+    this.setState({
+      isEditing: true,
+      editingMessageId: selectedMessageId,
+      editingMessageText: messageToEdit.message,
+      submitButtonText: 'Revise',
+    });
+  
     this.hideOptionsModal();
   };
 
@@ -234,7 +280,12 @@ class ChatScreen extends Component {
     }
 
     if (error) {
-      return <Text>{error}</Text>;
+      return (
+        <View>
+          <Text>{error}</Text>
+          <Text>{this.state.errorDetails}</Text>
+        </View>
+      );
     }
 
     const { name, creator, members } = chatData;
@@ -267,11 +318,14 @@ class ChatScreen extends Component {
           <TextInput
             style={styles.sendMessageInput}
             placeholder="Enter message"
-            onChangeText={(text) => this.setState({newMessage: text})}
-            value={this.state.newMessage}
+            onChangeText={(text) => this.setState(this.state.isEditing ? { editingMessageText: text } : { newMessage: text })}
+            value={this.state.isEditing ? this.state.editingMessageText : this.state.newMessage}
           />
-          <TouchableOpacity style={styles.sendMessageButton} onPress={() => this.sendMessages()}>
-            <Text style={styles.sendMessageButtonText}>Send</Text>
+          <TouchableOpacity
+            style={styles.sendMessageButton}
+            onPress={() => (this.state.isEditing ? this.updateMessage(this.state.editingMessageId) : this.sendMessages())}
+          >
+            <Text style={styles.sendMessageButtonText}>{this.state.submitButtonText}</Text>
           </TouchableOpacity>
           {this.renderOptionsModal()}
         </View>
