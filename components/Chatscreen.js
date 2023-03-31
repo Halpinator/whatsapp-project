@@ -18,6 +18,7 @@ class ChatScreen extends Component {
       isEditing: false,
       editingMessageText: '',
       submitButtonText: 'Send',
+      isEditingChatName: false,
       error: '',
       errorDetails: '',
     };
@@ -180,6 +181,33 @@ class ChatScreen extends Component {
     });
   };
 
+  updateChatName = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id, {
+        method: 'PATCH',
+        headers: {
+          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: this.state.chatData.name,
+        }),
+      });
+  
+      if (response.status === 200) {
+        console.log("Chat name updated");
+        this.handleChatNameEdit();
+      } else if (response.status === 401) {
+        console.log("Unauthorized");
+      } else {
+        this.setState({ error: "An error has occurred" });
+      }
+    } catch (error) {
+      console.error(error);
+      this.setState({ error: "An error has occurred" });
+    }
+  };
+
   renderMessage = ({ item }) => {
     const { chatData } = this.state;
     const { user_id } = this.state;
@@ -248,6 +276,10 @@ class ChatScreen extends Component {
     this.deleteMessages(messageId);
   };
 
+  handleChatNameEdit = () => {
+    this.setState({ isEditingChatName: !this.state.isEditingChatName });
+  };
+
   renderOptionsModal = (messageId, x, y) => {
     const { modalVisible, selectedMessageId } = this.state;
   
@@ -261,7 +293,7 @@ class ChatScreen extends Component {
         <TouchableOpacity onPress={this.hideOptionsModal}>
           <View style={styles.modalOverlay}></View>
         </TouchableOpacity>
-        <View style={[styles.modalContainer, { left: x, top: y }]}>
+        <View style={[styles.modalContainer, { left: x - 130, top: y }]}>
           <TouchableOpacity style={styles.modalOption} onPress={this.handleEditMessage}>
             <Text>Edit</Text>
           </TouchableOpacity>
@@ -293,7 +325,18 @@ class ChatScreen extends Component {
     return (
       <KeyboardAvoidingView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{name}</Text>
+          {this.state.isEditingChatName ? (
+            <TextInput
+              style={styles.headerTitle}
+              value={name}
+              onChangeText={(text) => this.setState({ chatData: { ...chatData, name: text } })}
+              onSubmitEditing={this.updateChatName}
+            />
+          ) : (
+            <Text style={styles.headerTitle} onPress={this.handleChatNameEdit}>
+              {name}
+            </Text>
+          )}
           <TouchableOpacity style={styles.backButton} onPress={() => this.props.navigation.goBack()}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
