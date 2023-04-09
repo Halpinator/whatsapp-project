@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { StyleSheet, FlatList, View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Modal } from 'react-native';
+import { StyleSheet, FlatList, View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Modal, ScrollView } from 'react-native';
 
 class ChatScreen extends Component {
   constructor(props) {
@@ -349,16 +349,28 @@ class ChatScreen extends Component {
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
-        <Text>Created by {creator.first_name} {creator.last_name}</Text>
-        <Text>Members:</Text>
-        <FlatList
-          data={members}
-          renderItem={({ item }) => (
-            <Text>{item.first_name} {item.last_name}</Text>
-          )}
-          keyExtractor={(item) => item.user_id.toString()}
-        />
-        <Text>Messages:</Text>
+        <View style={styles.membersContainer}>
+          <FlatList
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            data={members}
+            renderItem={({ item }) => (
+              <View style={styles.memberContainer}>
+              <View style={styles.memberNameContainer}>
+                <Text style={styles.memberName}>{item.first_name} {item.last_name}</Text>
+              </View>
+              <TouchableOpacity style={styles.memberButton} onPress={() => console.log('PRessed')}>
+                <Text style={styles.memberButtonText}>X </Text>
+              </TouchableOpacity>
+            </View>
+            )}
+            keyExtractor={(item) => item.user_id.toString()}
+            contentContainerStyle={{
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          />
+        </View>
         <FlatList
           data={messages}
           renderItem={this.renderMessage}
@@ -517,6 +529,35 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 12,
     color: '#aaa',
+  },
+  membersContainer: {
+    paddingVertical: 5,
+  },
+  memberContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 10,
+    marginBottom: 5,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  memberNameContainer: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  memberName: {
+    fontWeight: 'bold',
+  },
+  memberButton: {
+    backgroundColor: 'red',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  memberButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 

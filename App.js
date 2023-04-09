@@ -10,6 +10,7 @@ import Contactnav from './components/Contactnav'
 import Contactsearch from './components/Contactsearch'
 import Chatnav from './components/Chatnav'
 import Chatscreen from './components/Chatscreen'
+import Chatscreencontacts from './components/Chatscreencontacts'
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -28,6 +29,7 @@ function ChatTab() {
   return (
     <Tab.Navigator screenOptions={{headerShown:false}} initialRouteName="Contactnav">
       <Tab.Screen name="Chatscreen" component={Chatscreen} options={{ tabBarLabel: 'Chat' }}/>
+      <Tab.Screen name="Chatscreencontacts" component={Chatscreencontacts} options={{ tabBarLabel: 'Add Members' }}/>
     </Tab.Navigator>
   );
 }
