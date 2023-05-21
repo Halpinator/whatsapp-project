@@ -220,8 +220,20 @@ class ChatScreen extends Component {
     })
     .then(async (response) => {
         if(response.status === 200) {
-          await this.loadChatData();  
           console.log("User removed.");
+
+          const currentUserId = parseInt(await AsyncStorage.getItem("whatsthat_user_id"));
+          const deletedUserId = parseInt(user_id)
+
+          if(deletedUserId === currentUserId) {
+            this.props.navigation.goBack();
+            console.log("HELLO?!");
+          }
+          else {
+            console.log(user_id);
+            console.log(currentUserId);
+            await this.loadChatData();
+          }
         }else if (response.status === 401) {
           console.log("Unauthorised")
         }else{
