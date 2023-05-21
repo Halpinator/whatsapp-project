@@ -35,6 +35,7 @@ class ChatScreen extends Component {
 
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
       this.checkLoggedIn();
+      this.loadChatData();
       this.loadMessages();
     });
   }
@@ -227,7 +228,6 @@ class ChatScreen extends Component {
 
           if(deletedUserId === currentUserId) {
             this.props.navigation.goBack();
-            console.log("HELLO?!");
           }
           else {
             console.log(user_id);

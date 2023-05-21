@@ -9,15 +9,15 @@ class ContactItem extends Component {
     this.state ={ 
       isLoading: true,
       contactListData: [],
-      user_id: ''
+      user_id: '',
+      chat_id: '',
+      chatData: ''
     }
   }
 
-  handleRemoveButton = (contact) => {
+  handleAddButton = (contact) => {
     const user_id = contact.user_id;
-    this.removeContact(user_id).then(() => {
-      this.props.getContacts();
-    });
+    this.props.addUser(user_id);
   };
 
   removeContact = async (user_id) => {
@@ -51,8 +51,8 @@ class ContactItem extends Component {
           <View style={styles.contactInfo}>
             <Text style={styles.contactName}>{first_name + " " +  last_name}</Text>
           </View>
-          <TouchableOpacity style={styles.removeButton} onPress={() => this.handleRemoveButton(item)}>
-            <Text style={styles.removeButtonText}>Remove</Text>
+          <TouchableOpacity style={styles.addButton} onPress={() => this.handleAddButton(item)}>
+            <Text style={styles.addButtonText}>Add</Text>
           </TouchableOpacity>
         </View>
       </TouchableHighlight>
@@ -75,14 +75,35 @@ class ChatScreenContacts extends Component {
   };
 
   renderContactItem = ({ item }) => (
-    <ContactItem item={item} onPress={this.handleContactPress} getContacts={this.getContacts} />
+    <ContactItem item={item} onPress={this.handleContactPress} getContacts={this.getContacts} addUser={this.addUser}/>
   );
 
-  componentDidMount(){
+  async componentDidMount(){
+    const chat_id = await AsyncStorage.getItem("whatsthat_chat_id");
+    this.setState({ chat_id });
+  
+    this.checkLoggedIn();
+    const userContacts = await this.getContacts();
+    const chatData = await this.loadChatData(chat_id);
+    const chatMembers = chatData.members;
+
+    const { name, creator, members } = chatData;
+
+    console.log(members);
+
+    // Filter out any contacts that are already in the chat.
+    const addableContacts = userContacts.filter(contact => {
+      return !chatMembers.find(member => member.user_id === contact.user_id);
+    });
+
+    this.setState({ userData: addableContacts });
+    
+
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
       this.checkLoggedIn();
       this.getContacts();
-    });
+      this.loadChatData(chat_id);
+  });
   }
   
   componentWillUnmount() {
@@ -110,6 +131,7 @@ class ChatScreenContacts extends Component {
       const rJson = await response.json();
       console.log(rJson);
       this.setState({ userData: rJson });
+      return rJson; // return the contacts
     })
     .catch((error) => {
       console.error(error);
@@ -143,6 +165,70 @@ class ChatScreenContacts extends Component {
     });
   }
 
+  addUser = async (user_id) => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/user/' + user_id,
+    {
+        method: 'POST',
+        headers: { 
+          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
+          "Content-Type": "application/json"
+        },
+    })
+    .then(async (response) => {
+        if(response.status === 200) {
+          console.log("User added.");
+
+          const userContacts = await this.getContacts();
+          const chatData = await this.loadChatData(this.state.chat_id);
+          const chatMembers = chatData.members;
+
+          const { name, creator, members } = chatData;
+
+          console.log(members);
+
+          // Filter out any contacts that are already in the chat.
+          const addableContacts = userContacts.filter(contact => {
+            return !chatMembers.find(member => member.user_id === contact.user_id);
+          });
+
+          this.setState({ userData: addableContacts });
+        }else if (response.status === 401) {
+          console.log("Unauthorised")
+        }else{
+          this.setState({ error: 'An error has occured' });
+          this.setState({errorDetails: `Status: ${response.status}, Status Text: ${response.statusText}`});
+        }
+    })
+    .catch((error) => {
+      console.error(error);
+      console.log("Response Body: ", error.response.text());
+    });
+  };
+
+  loadChatData = async (chat_id) => {
+    try {
+      const response = await fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + chat_id, {
+        method: 'GET',
+        headers: {
+          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
+        },
+      });
+
+      if (response.status === 200) {
+        const chatData = await response.json();
+        this.setState({ chatData, loading: false });
+        return chatData;
+      } else if (response.status === 401) {
+        this.setState({ error: 'Unauthorized', loading: false });
+      } else {
+        this.setState({ error: 'An error occurred', loading: false });
+      }
+    } catch (error) {
+      console.error(error);
+      this.setState({ error: 'An error occurred', loading: false });
+    }
+  }
+
   goToSearch = () => {
     this.props.navigation.navigate('Contactsearch')
   }
@@ -152,7 +238,7 @@ class ChatScreenContacts extends Component {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Members</Text>
+          <Text style={styles.headerTitle}>Add Members</Text>
         </View>
         <FlatList
           data={this.state.userData}
@@ -216,13 +302,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   addButton: {
-    backgroundColor: '#fff',
-    padding: 10,
+    backgroundColor: 'green',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
     borderRadius: 5,
   },
   addButtonText: {
     fontSize: 16,
-    color: '#007bff',
+    color: '#fff',
     fontWeight: 'bold',
   },
   header: {
