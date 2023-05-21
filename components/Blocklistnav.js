@@ -16,7 +16,7 @@ class ContactItem extends Component {
   handleRemoveButton = (contact) => {
     const user_id = contact.user_id;
     this.removeContact(user_id).then(() => {
-      this.props.getContacts();
+      this.props.getBlockList();
     });
   };
 
@@ -38,17 +38,17 @@ class ContactItem extends Component {
     });
   }
 
-  handleBlockButton = (contact) => {
+  handleUnblockButton = (contact) => {
     const user_id = contact.user_id;
-    this.blockContact(user_id).then(() => {
-      this.props.getContacts();
+    this.unblockContact(user_id).then(() => {
+      this.props.getBlockList();
     });
   };
 
-  blockContact = async (user_id) => {
+  unblockContact = async (user_id) => {
     return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/block',
     {
-      method: 'POST',
+      method: 'DELETE',
       headers: { 
         "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
       }
@@ -73,14 +73,11 @@ class ContactItem extends Component {
     return (
       <TouchableHighlight underlayColor="#ddd" onPress={() => onPress(item)}>
         <View style={styles.contactItem}>
-          <TouchableOpacity style={styles.removeButton} onPress={() => this.handleRemoveButton(item)}>
-            <View style={styles.removeSymbol}/>
-          </TouchableOpacity>
           <View style={styles.contactInfo}>
             <Text style={styles.contactName}>{first_name + " " +  last_name}</Text>
           </View>
-          <TouchableOpacity style={styles.blockButton} onPress={() => this.handleBlockButton(item)}>
-            <Text style={styles.blockButtonText}>Block</Text>
+          <TouchableOpacity style={styles.unblockButton} onPress={() => this.handleUnblockButton(item)}>
+            <Text style={styles.unblockButtonText}>Unblock</Text>
           </TouchableOpacity>
         </View>
       </TouchableHighlight>
@@ -103,13 +100,13 @@ class ContactsPage extends Component {
   };
 
   renderContactItem = ({ item }) => (
-    <ContactItem item={item} onPress={this.handleContactPress} getContacts={this.getContacts} />
+    <ContactItem item={item} onPress={this.handleContactPress} getBlockList={this.getBlockList} />
   );
 
   componentDidMount(){
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
       this.checkLoggedIn();
-      this.getContacts();
+      this.getBlockList();
     });
   }
   
@@ -124,8 +121,8 @@ class ContactsPage extends Component {
     }
   }
 
-  getContacts = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/contacts',
+  getBlockList = async () => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/blocked',
     {
       method: 'GET',
       headers: { 
@@ -180,9 +177,9 @@ class ContactsPage extends Component {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Contacts</Text>
-          <TouchableOpacity style={styles.blockListButton} onPress={() => this.props.navigation.navigate('Blocklistnav')}>
-            <Text style={styles.blockListButtonText}>Block List</Text>
+          <Text style={styles.headerTitle}>Blocked Users</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => this.props.navigation.goBack()}>
+            <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
         <FlatList
@@ -273,39 +270,24 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     flex: 1,
   },
-  blockButton: {
+  unblockButton: {
     backgroundColor: 'white',
-    borderColor: 'red',
+    borderColor: 'green',
     borderWidth: 2,
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 5,
   },
-  blockButtonText: {
-    color: 'red',
+  unblockButtonText: {
+    color: 'green',
     fontWeight: 'bold',
   },
-  removeButton: {
-    backgroundColor: 'red',
-    width: 25,
-    height: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  removeSymbol: {
-    width: '80%',
-    height: 3,
-    backgroundColor: 'white',
-    position: 'absolute',
-  },
-  blockListButton: {
+  backButton: {
     backgroundColor: '#fff',
     padding: 10,
     borderRadius: 5,
   },
-  blockListButtonText: {
+  backButtonText: {
     fontSize: 16,
     color: '#007bff',
     fontWeight: 'bold',

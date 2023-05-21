@@ -11,6 +11,7 @@ import Contactsearch from './components/Contactsearch'
 import Chatnav from './components/Chatnav'
 import Chatscreen from './components/Chatscreen'
 import Chatscreencontacts from './components/Chatscreencontacts'
+import Blocklistnav from './components/Blocklistnav'
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -44,6 +45,7 @@ export default function App() {
         <Stack.Screen name="Appnav" component={Appnav} />
         <Stack.Screen name="Apptab" component={AppTab} />
         <Stack.Screen name="Chattab" component={ChatTab} />
+        <Stack.Screen name="Blocklistnav" component={Blocklistnav} />
       </Stack.Navigator>
     </NavigationContainer>
   )
