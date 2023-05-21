@@ -48,10 +48,26 @@ class ContactsSearchPage extends Component {
     <ContactItem item={item} onPress={this.handleContactPress} />
   );
 
-  componentDidMount(){
+  updateContactList = async () => {
+    const addedContacts = await this.getContacts();
+    const allUsers = await this.searchUsers();
+    const currentUserId = parseInt(await AsyncStorage.getItem("whatsthat_user_id"));
+
+    //const nonAddedUsers = allUsers.filter(user => { !addedContacts.some(contact => contact.user_id === user.user_id) && contact.user_id !== currentUserId;});
+
+    const nonAddedUsers = allUsers.filter(user => !addedContacts.some(contact => contact.user_id === user.user_id) && user.user_id !== currentUserId);
+    
+    this.setState({ userData: nonAddedUsers });
+  };
+
+  async componentDidMount(){
+    this.updateContactList();
+
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
       this.checkLoggedIn();
       this.searchUsers();
+      this.getContacts();
+      this.updateContactList();
     });
   }
   
@@ -78,7 +94,7 @@ class ContactsSearchPage extends Component {
       console.log(response)
       const rJson = await response.json();
       console.log(rJson);
-      this.setState({ userData: rJson });
+      return rJson; // return the contacts
     })
     .catch((error) => {
       console.error(error);
@@ -98,6 +114,27 @@ class ContactsSearchPage extends Component {
     })
     .then(async (response) => {
       console.log(response)
+      this.updateContactList();
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  }
+
+  getContacts = async () => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/contacts',
+    {
+      method: 'GET',
+      headers: { 
+        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+      }
+    })
+    .then(async (response) => {
+      console.log(response.status)
+      console.log(response.statusText)
+      const rJson = await response.json();
+      console.log(rJson);
+      return rJson; // return the contacts
     })
     .catch((error) => {
       console.error(error);
