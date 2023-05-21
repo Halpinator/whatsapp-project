@@ -207,6 +207,34 @@ class ChatScreen extends Component {
       this.setState({ error: "An error has occurred" });
     }
   };
+  
+
+  removeUser = async (user_id) => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/user/' + user_id,
+    {
+        method: 'DELETE',
+        headers: { 
+          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
+          "Content-Type": "application/json"
+        },
+    })
+    .then(async (response) => {
+        if(response.status === 200) {
+          await this.loadChatData();  
+          console.log("User removed.");
+        }else if (response.status === 401) {
+          console.log("Unauthorised")
+        }else{
+          this.setState({ error: 'An error has occured' });
+          this.setState({errorDetails: `Status: ${response.status}, Status Text: ${response.statusText}`});
+        }
+        await this.loadMessages();
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  };
+  
 
   renderMessage = ({ item }) => {
     const { chatData } = this.state;
@@ -279,7 +307,6 @@ class ChatScreen extends Component {
   };
 
   handleDeleteMessage = (messageId) => {
-    // TODO: Implement delete message functionality
     this.hideOptionsModal();
     this.deleteMessages(messageId);
   };
@@ -359,7 +386,7 @@ class ChatScreen extends Component {
               <View style={styles.memberNameContainer}>
                 <Text style={styles.memberName}>{item.first_name} {item.last_name}</Text>
               </View>
-              <TouchableOpacity style={styles.memberButton} onPress={() => console.log('PRessed')}>
+              <TouchableOpacity style={styles.memberButton} onPress={() => this.removeUser(item.user_id) && console.log('PRessed')}>
                 <Text style={styles.memberButtonText}>X </Text>
               </TouchableOpacity>
             </View>
