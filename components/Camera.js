@@ -1,6 +1,6 @@
 import { Camera, CameraType, PermissionStatus } from 'expo-camera';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Button } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App(props) {
@@ -60,11 +60,25 @@ export default function App(props) {
       console.error(error);
     });
   }
-
+  
   if(permission === null){
-    return (<Text>Waiting for permission</Text>);
+    return (
+      <View style={styles.centeredContainer}>
+        <Text style={styles.centeredText}>Waiting for permission...</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => props.navigation.goBack()} >
+            <Text style={styles.backButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
   } else if (!permission) {
-    return (<Text>No access to camera</Text>);
+    return (
+      <View style={styles.centeredContainer}>
+      <Text style={styles.centeredText}>Cannot access camera</Text>
+      <TouchableOpacity style={styles.backButton} onPress={() => props.navigation.goBack()} >
+          <Text style={styles.backButtonText}>Go Back</Text>
+      </TouchableOpacity>
+    </View>
+      );
   } else {
     return (
         <View style={styles.container}>
@@ -83,7 +97,7 @@ export default function App(props) {
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.button} onPress={() => props.navigation.goBack()}>
-                  <Text style={styles.text}>Go back</Text>
+                  <Text style={styles.text}>Go Back</Text>
               </TouchableOpacity>
             </View>
           </Camera>
@@ -110,6 +124,27 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: 'bold',
         color: '#ddd'
-    }
+    },
+    centeredContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 20
+    },
+    centeredText: {
+      textAlign: 'center',
+      marginBottom: 20,
+      fontSize: 30,
+    },
+    backButton: {
+      backgroundColor: '#007bff',
+      padding: 10,
+      borderRadius: 5,
+    },
+    backButtonText: {
+      fontSize: 16,
+      color: '#fff',
+      fontWeight: 'bold',
+    },
 })
 
