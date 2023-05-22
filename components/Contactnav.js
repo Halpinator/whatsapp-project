@@ -8,10 +8,38 @@ class ContactItem extends Component {
     super(props);
     this.state ={ 
       isLoading: true,
-      contactListData: [],
       user_id: '',
       photo: null,
     }
+  }
+
+  async componentDidMount(){
+    const { item } = this.props;
+    this.getProfileImage(item.user_id);
+  }
+
+  getProfileImage = async (user_id) => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
+    {
+      method: 'GET',
+      headers: { 
+        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+      }
+    })
+    .then(async (response) => {
+      return response.blob();
+    })
+    .then((resBlob) => {
+      let data = URL.createObjectURL(resBlob);
+      this.setState({
+          photo: data,
+          isLoading: false
+      })
+    })
+    .catch((error) => {
+      console.error(error);
+      this.setState({photo: null});
+    });
   }
 
   handleRemoveButton = (contact) => {
@@ -65,39 +93,10 @@ class ContactItem extends Component {
     });
   }
 
-  getProfileImage = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
-    {
-      method: 'GET',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
-    })
-    .then(async (response) => {
-      console.log(response);
-      const rText = await response.text();
-      console.log(rText);
-
-      return res.blob();
-    })
-    .then((resBlob) => {
-      let data = URL.createObjectURL(resBlob);
-
-      this.setState({
-          photo: data,
-          isLoading: false
-      })
-    })
-    .catch((error) => {
-      console.error(error);
-      this.setState({photo: null});
-    });
-  }
-
   render() {
     const { item, onPress } = this.props;
 
-    const { first_name, last_name} = item;
+    const { first_name, last_name } = item;
 
     const navigation = this.props.navigation;
 
@@ -152,6 +151,7 @@ class ContactsPage extends Component {
       this.checkLoggedIn();
       this.getContacts();
       this.getUserInfo(user_id);
+      this.getProfileImage(user_id);
     });
   }
   
@@ -203,6 +203,33 @@ class ContactsPage extends Component {
     })
     .catch((error) => {
       console.error(error);
+    });
+  }
+
+  getProfileImage = async (user_id) => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
+    {
+      method: 'GET',
+      headers: { 
+        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+      }
+    })
+    .then(async (response) => {
+      console.log(response);
+
+      return response.blob();
+    })
+    .then((resBlob) => {
+      let data = URL.createObjectURL(resBlob);
+
+      this.setState({
+          photo: data,
+          isLoading: false
+      })
+    })
+    .catch((error) => {
+      console.error(error);
+      this.setState({photo: null});
     });
   }
 
@@ -389,9 +416,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   contactImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 25,
+    width: 50,
+    height: 50,
+    borderRadius: 30,
     marginRight: 10,
   },
   contactInitialsContainer: {
@@ -408,9 +435,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   headerImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     marginRight: 10,
   },
   headerInitialsContainer: {
