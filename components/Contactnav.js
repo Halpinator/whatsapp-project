@@ -249,7 +249,7 @@ class ContactsPage extends Component {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={this.handleProfilePress}>
+          <TouchableOpacity onPress={() => this.props.navigation.navigate('Camera')}>
             {photo ?
               <Image style={styles.headerImage} source={{ uri: photo }}/> :
               <View style={styles.headerInitialsContainer}>
