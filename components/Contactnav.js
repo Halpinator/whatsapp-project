@@ -10,7 +10,7 @@ class ContactItem extends Component {
       isLoading: true,
       contactListData: [],
       user_id: '',
-      photo: null
+      photo: null,
     }
   }
 
@@ -38,6 +38,7 @@ class ContactItem extends Component {
       console.error(error);
     });
   }
+
 
   handleBlockButton = (contact) => {
     const user_id = contact.user_id;
@@ -132,7 +133,8 @@ class ContactsPage extends Component {
     this.state = {
       userData: [],
       user_id: '',
-      selectedContacts: []
+      selectedContacts: [],
+      currentUserInfo: []
     };
   }
 
@@ -144,10 +146,12 @@ class ContactsPage extends Component {
     <ContactItem item={item} onPress={this.handleContactPress} getContacts={this.getContacts} />
   );
 
-  componentDidMount(){
-    this.unsubscribe = this.props.navigation.addListener('focus', () => {
+  async componentDidMount(){
+    this.unsubscribe = this.props.navigation.addListener('focus', async () => {
+      const user_id = await AsyncStorage.getItem("whatsthat_user_id");
       this.checkLoggedIn();
       this.getContacts();
+      this.getUserInfo(user_id);
     });
   }
   
@@ -176,6 +180,26 @@ class ContactsPage extends Component {
       const rJson = await response.json();
       console.log(rJson);
       this.setState({ userData: rJson });
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  }
+
+  getUserInfo = async (user_id) => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id,
+    {
+      method: 'GET',
+      headers: { 
+        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+      }
+    })
+    .then(async (response) => {
+      console.log(response.status)
+      console.log(response.statusText)
+      const rJson = await response.json();
+      console.log(rJson);
+      this.setState({ currentUserInfo: rJson });
     })
     .catch((error) => {
       console.error(error);
@@ -215,10 +239,25 @@ class ContactsPage extends Component {
 
   render() {
 
+    const { currentUserInfo, photo } = this.state;
+    const { first_name, last_name } = currentUserInfo || {};
+
+    const initials = (currentUserInfo.first_name && currentUserInfo.last_name)
+      ? currentUserInfo.first_name[0] + currentUserInfo.last_name[0]
+      : "";
+
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Contacts</Text>
+          <TouchableOpacity onPress={this.handleProfilePress}>
+            {photo ?
+              <Image style={styles.headerImage} source={{ uri: photo }}/> :
+              <View style={styles.headerInitialsContainer}>
+                <Text style={styles.headerInitials}>{initials.toUpperCase()}</Text>
+              </View>
+            }
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Hi {first_name}</Text>
           <TouchableOpacity style={styles.blockListButton} onPress={() => this.props.navigation.navigate('Blocklistnav')}>
             <Text style={styles.blockListButtonText}>Block List</Text>
           </TouchableOpacity>
@@ -367,6 +406,26 @@ const styles = StyleSheet.create({
   contactInitials: {
     color: 'white',
     fontSize: 18,
+  },
+  headerImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  headerInitialsContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  headerInitials: {
+    color: 'grey',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 
