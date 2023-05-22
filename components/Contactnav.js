@@ -9,7 +9,8 @@ class ContactItem extends Component {
     this.state ={ 
       isLoading: true,
       contactListData: [],
-      user_id: ''
+      user_id: '',
+      photo: null
     }
   }
 
@@ -63,6 +64,35 @@ class ContactItem extends Component {
     });
   }
 
+  getProfileImage = async (user_id) => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
+    {
+      method: 'GET',
+      headers: { 
+        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+      }
+    })
+    .then(async (response) => {
+      console.log(response);
+      const rText = await response.text();
+      console.log(rText);
+
+      return res.blob();
+    })
+    .then((resBlob) => {
+      let data = URL.createObjectURL(resBlob);
+
+      this.setState({
+          photo: data,
+          isLoading: false
+      })
+    })
+    .catch((error) => {
+      console.error(error);
+      this.setState({photo: null});
+    });
+  }
+
   render() {
     const { item, onPress } = this.props;
 
@@ -70,12 +100,20 @@ class ContactItem extends Component {
 
     const navigation = this.props.navigation;
 
+    const initials = first_name[0] + last_name[0];
+
     return (
       <TouchableHighlight underlayColor="#ddd" onPress={() => onPress(item)}>
         <View style={styles.contactItem}>
           <TouchableOpacity style={styles.removeButton} onPress={() => this.handleRemoveButton(item)}>
             <View style={styles.removeSymbol}/>
           </TouchableOpacity>
+          {this.state.photo ?
+              <Image style={styles.contactImage} source={{ uri: this.state.photo }}/> :
+              <View style={styles.contactInitialsContainer}>
+                <Text style={styles.contactInitials}>{initials.toUpperCase()}</Text>
+              </View>
+            }
           <View style={styles.contactInfo}>
             <Text style={styles.contactName}>{first_name + " " +  last_name}</Text>
           </View>
@@ -212,6 +250,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderColor: '#ddd',
+    alignItems: 'center',
   },
   profilePic: {
     width: 60,
@@ -309,6 +348,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#007bff',
     fontWeight: 'bold',
+  },
+  contactImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  contactInitialsContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 25,
+    backgroundColor: 'grey',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  contactInitials: {
+    color: 'white',
+    fontSize: 18,
   },
 });
 

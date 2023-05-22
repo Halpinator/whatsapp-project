@@ -86,24 +86,31 @@ class ChatScreenContacts extends Component {
     const userContacts = await this.getContacts();
     const chatData = await this.loadChatData(chat_id);
     const chatMembers = chatData.members;
-
+  
     const { name, creator, members } = chatData;
-
+  
     console.log(members);
-
+  
     // Filter out any contacts that are already in the chat.
     const addableContacts = userContacts.filter(contact => {
       return !chatMembers.find(member => member.user_id === contact.user_id);
     });
-
+  
     this.setState({ userData: addableContacts });
-    
-
-    this.unsubscribe = this.props.navigation.addListener('focus', () => {
+  
+    this.unsubscribe = this.props.navigation.addListener('focus', async () => {
       this.checkLoggedIn();
-      this.getContacts();
-      this.loadChatData(chat_id);
-  });
+      const userContacts = await this.getContacts();
+      const chatData = await this.loadChatData(chat_id);
+      const chatMembers = chatData.members;
+  
+      // Filter out any contacts that are already in the chat.
+      const addableContacts = userContacts.filter(contact => {
+        return !chatMembers.find(member => member.user_id === contact.user_id);
+      });
+  
+      this.setState({ userData: addableContacts });
+    });
   }
   
   componentWillUnmount() {
@@ -130,7 +137,7 @@ class ChatScreenContacts extends Component {
       console.log(response.statusText)
       const rJson = await response.json();
       console.log(rJson);
-      this.setState({ userData: rJson });
+      //this.setState({ userData: rJson });
       return rJson; // return the contacts
     })
     .catch((error) => {

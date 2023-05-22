@@ -12,6 +12,7 @@ import Chatnav from './components/Chatnav'
 import Chatscreen from './components/Chatscreen'
 import Chatscreencontacts from './components/Chatscreencontacts'
 import Blocklistnav from './components/Blocklistnav'
+import Camera from './components/Camera'
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -39,13 +40,14 @@ function ChatTab() {
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{headerShown:false}} initialRouteName='Login'>
+      <Stack.Navigator screenOptions={{headerShown:false}} initialRouteName='login'>
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Signup" component={Signup} />
         <Stack.Screen name="Appnav" component={Appnav} />
         <Stack.Screen name="Apptab" component={AppTab} />
         <Stack.Screen name="Chattab" component={ChatTab} />
         <Stack.Screen name="Blocklistnav" component={Blocklistnav} />
+        <Stack.Screen name="Camera" component={Camera} />
       </Stack.Navigator>
     </NavigationContainer>
   )
