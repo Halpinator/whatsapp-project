@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { StyleSheet, FlatList, View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Modal, ScrollView } from 'react-native';
+import { StyleSheet, FlatList, View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Modal, ScrollView, Image } from 'react-native';
 
 class ChatScreen extends Component {
   constructor(props) {
@@ -13,6 +13,7 @@ class ChatScreen extends Component {
       newMessage: '',
       messageId: '',
       loading: true,
+      profilePicturesLoading: true,
       modalVisible: false,
       selectedMessageId: null,
       isEditing: false,
@@ -21,6 +22,8 @@ class ChatScreen extends Component {
       isEditingChatName: false,
       error: '',
       errorDetails: '',
+      photo: null,
+      profilePictures:[],
     };
   }
 
@@ -32,6 +35,7 @@ class ChatScreen extends Component {
       this.loadChatData();
       this.loadMessages();
     });
+
 
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
       this.checkLoggedIn();
@@ -86,7 +90,9 @@ class ChatScreen extends Component {
       if (response.status === 200) {
         const { messages } = await response.json();
         console.log(messages);
-        this.setState({ messages });
+        this.setState({ messages }, () => {
+          this.getAllProfileImages();
+        });
       } else if (response.status === 401) {
         console.log("Unauthorised");
       } else {
@@ -246,6 +252,43 @@ class ChatScreen extends Component {
       console.error(error);
     });
   };
+
+  getAllProfileImages = async () => {
+
+    const { messages } = this.state;
+
+    const profileImages = {};
+    const promises = messages.map(async (message) => {
+      const userId = message.author.user_id;
+      const profileImage = await this.getProfileImage(userId);
+      profileImages[userId] = profileImage;
+    });
+  
+    await Promise.all(promises);
+  
+    this.setState({ profileImages, profilePicturesLoading: false });
+  }
+
+  // Get Profile Image Function
+  getProfileImage = async (user_id) => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
+    {
+      method: 'GET',
+      headers: { 
+        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+      }
+    })
+    .then(async (response) => {
+      const resBlob = await response.blob();
+      const data = URL.createObjectURL(resBlob);
+      console.log(data);
+      return data;
+    })
+    .catch((error) => {
+      console.error(error);
+      return null;
+    });
+  }
   
 
   renderMessage = ({ item }) => {
@@ -255,6 +298,12 @@ class ChatScreen extends Component {
     if (!chatData) {
       return null;
     }
+
+    const profilePicture = this.state.profileImages[item.author.user_id];
+
+    const initials = item.author.first_name[0] + item.author.last_name[0];
+
+    //console.log(profilePicture)
   
     const messageStyle = item.author.user_id === parseInt(user_id)
       ? styles.sentMessage
@@ -266,7 +315,7 @@ class ChatScreen extends Component {
       ? (item.author.first_name + ' ' + item.author.last_name)
       : null;
 
-    console.log(authorName);
+    //console.log(authorName);
   
     if (item.author.user_id === parseInt(user_id)) {
       return (
@@ -279,13 +328,21 @@ class ChatScreen extends Component {
       );
     } else {
       return (
-        <View>
-          {authorName && (
-            <Text style={styles.authorName}>{authorName}</Text>
-          )}
-          <TouchableOpacity style={messageStyle}>
-            <Text style={messageTextStyle}>{item.message}</Text>
-          </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
+          {profilePicture ?
+            <Image style={styles.headerImage} source={{ uri: profilePicture }}/> :
+            <View style={styles.headerInitialsContainer}>
+              <Text style={styles.headerInitials}>{initials}</Text>
+            </View>
+          }
+          <View style={{ flex: 1 }}>
+            {authorName && (
+              <Text style={styles.authorName}>{authorName}</Text>
+            )}
+            <TouchableOpacity style={messageStyle}>
+              <Text style={messageTextStyle}>{item.message}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       );
     }
@@ -353,8 +410,9 @@ class ChatScreen extends Component {
   };
 
   render() {
-    const { chatData, messages, loading, error } = this.state;
-    if (loading) {
+    const { chatData, messages, loading, error, profilePicturesLoading } = this.state;
+
+    if (loading || profilePicturesLoading) {
       return <Text>Loading...</Text>;
     }
 
@@ -468,7 +526,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     borderRadius: 20,
     padding: 10,
-    marginLeft: 10,
     marginRight: 10,
     marginBottom: 10,
     marginTop: 5,
@@ -564,7 +621,6 @@ const styles = StyleSheet.create({
     right: 0,
   },
   authorName: {
-    marginHorizontal: 10,
     marginTop: 10,
     fontSize: 12,
     color: '#aaa',
@@ -596,6 +652,26 @@ const styles = StyleSheet.create({
   },
   memberButtonText: {
     color: 'white',
+    fontWeight: 'bold',
+  },
+  headerImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  headerInitialsContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'grey',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  headerInitials: {
+    color: 'white',
+    fontSize: 18,
     fontWeight: 'bold',
   },
 });
