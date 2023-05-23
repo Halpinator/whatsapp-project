@@ -54,7 +54,7 @@ class ChatScreen extends Component {
     }
   };
 
-  loadChatData = async () => {
+  loadChatData = async (chat_id) => {
     try {
       const response = await fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id, {
         method: 'GET',
@@ -64,18 +64,24 @@ class ChatScreen extends Component {
       });
 
       if (response.status === 200) {
+        console.log('Successfully loaded chat')
         const chatData = await response.json();
         this.setState({ chatData, loading: false });
       } else if (response.status === 401) {
-        this.setState({ error: 'Unauthorized', loading: false });
+        console.log('Unauthorized');
+      } else if (response.status === 403) {
+        console.log('Forbidden');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
       } else {
-        this.setState({ error: 'An error occurred', loading: false });
+        console.error("Something went wrong", response.status);
       }
     } catch (error) {
       console.error(error);
-      this.setState({ error: 'An error occurred', loading: false });
     }
-  };
+  }
 
   loadMessages = async () => {
     try {
@@ -93,7 +99,13 @@ class ChatScreen extends Component {
           this.getAllProfileImages();
         });
       } else if (response.status === 401) {
-        console.log('Unauthorised');
+        console.log('Unauthorized');
+      } else if (response.status === 403) {
+        console.log('Forbidden');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
       } else {
         this.setState({ error: 'An error occurred' });
         console.log('Something went wrong.');
@@ -104,32 +116,41 @@ class ChatScreen extends Component {
     }
   };
 
-  sendMessages = async () => {
+  sendMessages = async (message) => {
     return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/message',
     {
-      method: 'POST',
-      headers: {
-        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: this.state.newMessage,
-      }),
+        method: 'POST',
+        headers: { 
+          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: this.state.newMessage,
+        })
     })
-      .then(async (response) => {
+    .then(async (response) => {
         if (response.status === 200) {
+          console.log("Successfully sent message")
           this.setState({ newMessage: '' });
+        } else if (response.status === 400) {
+          console.log('Bad Request');
         } else if (response.status === 401) {
-          console.log('Unauthorised');
+          console.log('Unauthorized');
+        } else if (response.status === 403) {
+          console.log('Forbidden');
+        } else if (response.status === 404) {
+          console.log('Not Found');
+        } else if (response.status === 500) {
+          console.log('Server Error');
         } else {
-          this.setState({ error: 'An error has occurred' });
+          console.log('Something went wrong')
         }
         await this.loadMessages();
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  };
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  }
 
   deleteMessages = async (messageId) => {
     return fetch(
@@ -144,11 +165,20 @@ class ChatScreen extends Component {
     )
       .then(async (response) => {
         if (response.status === 200) {
+          console.log("Successfully deleted message")
           await this.loadMessages();
+        } else if (response.status === 400) {
+          console.log('Bad Request');
         } else if (response.status === 401) {
-          console.log('Unauthorised');
+          console.log('Unauthorized');
+        } else if (response.status === 403) {
+          console.log('Forbidden');
+        } else if (response.status === 404) {
+          console.log('Not Found');
+        } else if (response.status === 500) {
+          console.log('Server Error');
         } else {
-          this.setState({ error: 'An error has occurred' });
+          console.log('Something went wrong');
         }
       })
       .catch((error) => {
@@ -177,14 +207,19 @@ class ChatScreen extends Component {
             editingMessageText: '',
             submitButtonText: 'Send',
           });
-          console.log('Message updated');
+          console.log('Message successfully updated');
+        } else if (response.status === 400) {
+          console.log('Bad Request');
         } else if (response.status === 401) {
-          console.log('Unauthorised');
+          console.log('Unauthorized');
+        } else if (response.status === 403) {
+          console.log('Forbidden');
+        } else if (response.status === 404) {
+          console.log('Not Found');
+        } else if (response.status === 500) {
+          console.log('Server Error');
         } else {
-          this.setState({ error: 'An error has occured' });
-          this.setState({
-            errorDetails: `Status: ${response.status}, Status Text: ${response.statusText}`,
-          });
+          console.log('Something went wrong');
         }
         await this.loadMessages();
       })
@@ -207,12 +242,20 @@ class ChatScreen extends Component {
       });
 
       if (response.status === 200) {
-        console.log('Chat name updated');
+        console.log('Chat name successfully updated');
         this.handleChatNameEdit();
+      } else if (response.status === 400) {
+        console.log('Bad Request');
       } else if (response.status === 401) {
         console.log('Unauthorized');
+      } else if (response.status === 403) {
+        console.log('Forbidden');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
       } else {
-        this.setState({ error: 'An error has occurred' });
+        console.log('Something went wrong');
       }
     } catch (error) {
       console.error(error);
@@ -231,7 +274,7 @@ class ChatScreen extends Component {
     })
       .then(async (response) => {
         if (response.status === 200) {
-          console.log('User removed.');
+          console.log('User successfully removed.');
 
           const currentUserId = parseInt(await AsyncStorage.getItem('whatsthat_user_id'));
           const deletedUserId = parseInt(user_id);
@@ -244,12 +287,15 @@ class ChatScreen extends Component {
             await this.loadChatData();
           }
         } else if (response.status === 401) {
-          console.log('Unauthorised');
+          console.log('Unauthorized');
+        } else if (response.status === 403) {
+          console.log('Forbidden');
+        } else if (response.status === 404) {
+          console.log('Not Found');
+        } else if (response.status === 500) {
+          console.log('Server Error');
         } else {
-          this.setState({ error: 'An error has occured' });
-          this.setState({
-            errorDetails: `Status: ${response.status}, Status Text: ${response.statusText}`,
-          });
+          console.log('Something went wrong');
         }
         await this.loadMessages();
       })
@@ -273,7 +319,6 @@ class ChatScreen extends Component {
     this.setState({ profileImages, profilePicturesLoading: false });
   };
 
-  // Get Profile Image Function
   getProfileImage = async (user_id) => {
     return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
     {
@@ -283,10 +328,21 @@ class ChatScreen extends Component {
       },
     })
       .then(async (response) => {
-        const resBlob = await response.blob();
-        const data = URL.createObjectURL(resBlob);
-        console.log(data);
-        return data;
+        if (response.status === 200) {
+          console.log('Photo successfully pulled');
+          const resBlob = await response.blob();
+          const data = URL.createObjectURL(resBlob);
+          console.log(data);
+          return data;
+        } else if (response.status === 401) {
+          console.log('Unauthorized');
+        } else if (response.status === 404) {
+          console.log('Not Found');
+        } else if (response.status === 500) {
+          console.log('Server Error');
+        } else {
+          console.log('Something went wrong');
+        }
       })
       .catch((error) => {
         console.error(error);

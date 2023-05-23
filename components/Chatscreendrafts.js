@@ -123,8 +123,6 @@ class ChatScreenContacts extends Component {
   }
 
   sendMessages = async (message) => {
-    console.log(message);
-
     return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/message',
     {
         method: 'POST',
@@ -137,12 +135,20 @@ class ChatScreenContacts extends Component {
         })
     })
     .then(async (response) => {
-        if(response.status === 200) {
-          console.log("Success")
-        }else if (response.status === 401) {
-          console.log("Unauthorised")
-        }else{
-          this.setState({ error: 'An error has occured' });
+        if (response.status === 200) {
+          console.log("Successfully sent message")
+        } else if (response.status === 400) {
+          console.log('Bad Request');
+        } else if (response.status === 401) {
+          console.log('Unauthorized');
+        } else if (response.status === 403) {
+          console.log('Forbidden');
+        } else if (response.status === 404) {
+          console.log('Not Found');
+        } else if (response.status === 500) {
+          console.log('Server Error');
+        } else {
+          console.log('Something went wrong');
         }
     })
     .catch((error) => {
