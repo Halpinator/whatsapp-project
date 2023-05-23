@@ -1,18 +1,74 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableHighlight, TouchableOpacity, TextInput, Button } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableHighlight, TouchableOpacity, TextInput, Image } from 'react-native';
 
 class ContactItem extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      user_id: '',
+      photo: null,
+      isLoading: true,
+    };
+  }
+
+  async componentDidMount() {
+    const { item } = this.props;
+    this.getProfileImage(item.user_id);
+  }
+
+  getProfileImage = async (user_id) => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
+    {
+      method: 'GET',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
+    })
+      .then(async (response) => {
+        if (response.status === 200) {
+          console.log('Photo successfully pulled');
+          const resBlob = await response.blob();
+          const data = URL.createObjectURL(resBlob);
+          console.log(data);
+          
+          this.setState({
+            photo: data,
+            isLoading: false
+        })
+        } else if (response.status === 401) {
+          console.log('Unauthorized');
+        } else if (response.status === 404) {
+          console.log('Not Found');
+        } else if (response.status === 500) {
+          console.log('Server Error');
+        } else {
+          console.log('Something went wrong');
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        this.setState({photo: null});
+      });
+  };
+
   render() {
     const { item, onPress } = this.props;
     const { given_name, family_name } = item;
 
+    const initials = given_name[0] + family_name[0];
+
     return (
       <TouchableHighlight underlayColor="#ddd" onPress={() => onPress(item)}>
         <View style={styles.contactItem}>
-          <View style={styles.contactInfo}>
+            {this.state.photo ? (
+              <Image style={styles.contactImage} source={{ uri: this.state.photo }} />
+            ) : (
+              <View style={styles.contactInitialsContainer}>
+                <Text style={styles.contactInitials}>{initials.toUpperCase()}</Text>
+              </View>
+            )}
             <Text style={styles.contactName}>{given_name + ' ' + family_name}</Text>
-          </View>
         </View>
       </TouchableHighlight>
     );
@@ -185,7 +241,7 @@ class ContactsSearchPage extends Component {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Search</Text>
+          <Text style={styles.headerTitle}>Add new contacts</Text>
         </View>
         <FlatList
           data={this.state.userData}
@@ -225,15 +281,13 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderColor: '#ddd',
+    alignItems: 'center',
   },
   profilePic: {
     width: 60,
     height: 60,
     borderRadius: 30,
     marginRight: 12,
-  },
-  contactInfo: {
-    flex: 1,
   },
   contactName: {
     fontSize: 18,
@@ -313,6 +367,25 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  contactImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 30,
+    marginRight: 10,
+  },
+  contactInitialsContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'grey',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  contactInitials: {
+    color: 'white',
+    fontSize: 18,
   },
 });
 
