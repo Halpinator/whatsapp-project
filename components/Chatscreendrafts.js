@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
 import { res } from 'react-email-validator';
 import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity, TextInput, Button, ScrollView } from 'react-native';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 
 class DraftItem extends Component {
   constructor(props){
@@ -9,6 +11,9 @@ class DraftItem extends Component {
     this.state = { 
       text: this.props.text,
       isEditing: false,
+      isScheduling: false,
+      date: new Date(),
+      hasBeenScheduled: false,
     }
   }
 
@@ -20,6 +25,33 @@ class DraftItem extends Component {
     this.setState({isEditing: true});
   };
 
+  handleScheduleButton = () => {
+    this.setState({isScheduling: true});
+  };
+
+  handleDeleteButton = () => {
+    this.props.onDelete(this.props.id);
+  };
+
+  handleDateChange = (selectedDate) => {
+    const currentDate = selectedDate || this.state.date;
+    
+    const timeUntilSend = currentDate.getTime() - Date.now();
+  
+    if (timeUntilSend > 0) {
+      this.setState({date: currentDate, isScheduling: false, hasBeenScheduled: true});
+  
+      setTimeout(() => {
+        this.handleSendButton();
+      }, timeUntilSend);
+    } else {
+      console.error('Selected time is in the past');
+      this.setState({hasBeenScheduled: false});
+    }
+  };
+  
+
+
   handleChangeText = (text) => {
     this.setState({text});
   };
@@ -30,7 +62,18 @@ class DraftItem extends Component {
   };
 
   render() {
-    if (this.state.isEditing) {
+    if (this.state.isScheduling) {
+      return (
+        <DatePicker
+          selected={this.state.date}
+          onChange={this.handleDateChange}
+          showTimeSelect
+          timeFormat="HH:mm"
+          timeIntervals={15}
+          dateFormat="Pp"
+        />
+      );
+    } else if (this.state.isEditing) {
       return (
         <View style={styles.draftItem}>
           <TextInput style={styles.draftInput} value={this.state.text} onChangeText={this.handleChangeText} />
@@ -46,18 +89,35 @@ class DraftItem extends Component {
       return (
         <View style={styles.draftItem}>
           <Text style={styles.draftText}>{this.state.text}</Text>
+          {this.state.hasBeenScheduled && (
+              <Text style={styles.dateText}>
+                Scheduled for: {this.state.date.toLocaleString()}
+              </Text>
+          )}
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={styles.editAndSendButton}
-              onPress={this.handleEditButton}
+              style={styles.actionButton}
+              onPress={this.handleScheduleButton}
             >
-              <Text style={styles.editAndSendButtonText}>Edit</Text>
+              <Text style={styles.actionButtonText}>Schedule</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.editAndSendButton}
+              style={styles.actionButton}
+              onPress={this.handleEditButton}
+            >
+              <Text style={styles.actionButtonText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={this.handleDeleteButton}
+            >
+              <Text style={styles.actionButtonText}>Delete</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionButton}
               onPress={this.handleSendButton}
             >
-              <Text style={styles.editAndSendButtonText}>Send</Text>
+              <Text style={styles.actionButtonText}>Send</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -113,6 +173,10 @@ class ChatScreenContacts extends Component {
   }
 
   handleAddButton = () => {
+    if (this.state.text.trim() === '') {
+      return; 
+    }
+
     const newDraft = {
       id: new Date().getTime().toString(),
       text: this.state.text,
@@ -129,10 +193,8 @@ class ChatScreenContacts extends Component {
   handleSendButton = async (id) => {
     const draft = this.state.drafts.find((draft) => draft.id === id);
 
-    // Send draft.text to the chat
     this.sendMessages(draft);
 
-    // Then remove the draft from the state and async storage
     this.setState((prevState) => ({
       drafts: prevState.drafts.filter((draft) => draft.id !== id),
     }), () => {
@@ -143,6 +205,14 @@ class ChatScreenContacts extends Component {
   handleEditButton = (id, text) => {
     this.setState((prevState) => ({
       drafts: prevState.drafts.map((draft) => draft.id === id ? {...draft, text} : draft),
+    }), () => {
+      AsyncStorage.setItem('drafts', JSON.stringify(this.state.drafts));
+    });
+  };
+
+  handleDeleteButton = (id) => {
+    this.setState((prevState) => ({
+      drafts: prevState.drafts.filter((draft) => draft.id !== id),
     }), () => {
       AsyncStorage.setItem('drafts', JSON.stringify(this.state.drafts));
     });
@@ -184,6 +254,7 @@ class ChatScreenContacts extends Component {
               text={draft.text} 
               onSend={this.handleSendButton} 
               onEdit={this.handleEditButton}
+              onDelete={this.handleDeleteButton}
             />
           ))}
         </ScrollView>
@@ -360,6 +431,62 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     alignSelf: 'flex-end',
+  },
+  dateText: {
+    color: '#000',
+    fontSize: 14,
+    textAlign: 'right',
+  },
+  deleteButton: {
+    height: 50,
+    backgroundColor: '#ff0000',  // you can adjust the color as you prefer
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    margin: 5,
+  },
+  deleteButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  draftItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
+    justifyContent: 'space-between',
+  },
+  draftText: {
+    marginBottom: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  actionButton: {
+    flex: 1,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 5,
+    backgroundColor: '#007bff',
+    borderRadius: 5,
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  deleteButton: {
+    flex: 1,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 5,
+    backgroundColor: 'red',
+    borderRadius: 5,
   },
 });
 
