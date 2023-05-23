@@ -442,7 +442,7 @@ class ChatScreen extends Component {
               {name}
             </Text>
           )}
-          <TouchableOpacity style={styles.backButton} onPress={() => this.props.navigation.goBack()}>
+          <TouchableOpacity style={styles.backButton} onPress={() => this.props.navigation.navigate('Chatnav')}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>

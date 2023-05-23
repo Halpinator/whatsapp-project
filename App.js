@@ -13,6 +13,7 @@ import Chatscreen from './components/Chatscreen'
 import Chatscreencontacts from './components/Chatscreencontacts'
 import Blocklistnav from './components/Blocklistnav'
 import Camera from './components/Camera'
+import Chatscreendrafts from './components/Chatscreendrafts'
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -29,9 +30,10 @@ function AppTab() {
 
 function ChatTab() {
   return (
-    <Tab.Navigator screenOptions={{headerShown:false}} initialRouteName="Contactnav">
-      <Tab.Screen name="Chatscreen" component={Chatscreen} options={{ tabBarLabel: 'Chat' }}/>
+    <Tab.Navigator screenOptions={{headerShown:false}} initialRouteName="Chatscreen">
       <Tab.Screen name="Chatscreencontacts" component={Chatscreencontacts} options={{ tabBarLabel: 'Add Members' }}/>
+      <Tab.Screen name="Chatscreen" component={Chatscreen} options={{ tabBarLabel: 'Chat' }}/>
+      <Tab.Screen name="Chatscreendrafts" component={Chatscreendrafts} options={{ tabBarLabel: 'Write drafts' }}/>
     </Tab.Navigator>
   );
 }

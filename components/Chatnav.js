@@ -8,22 +8,39 @@ class ChatItem extends Component {
     super(props);
     this.state ={ 
       isLoading: true,
-      contactListData: []
+      contactListData: [],
+      userId: '',
     }
+  }
+
+  async componentDidMount(){
+    const userId = await AsyncStorage.getItem("whatsthat_user_id");
+    this.setState({userId: parseInt(userId)});
   }
 
   render() {
     const { item, onPress } = this.props;
     const { name, last_message } = item;
+    const { userId } = this.state;
 
     const navigation = this.props.navigation;
+
+    let lastMessageComponent;
+    if(last_message && last_message.author) {
+      lastMessageComponent = 
+        userId === last_message.author.user_id 
+        ? 'You: ' + last_message.message 
+        : last_message.author.first_name + ': ' + last_message.message;
+    } else {
+      lastMessageComponent = 'No message';
+    }
 
     return (
       <TouchableHighlight underlayColor="#ddd" onPress={() => onPress(item)}>
         <View style={styles.ChatItem}>
           <View style={styles.contactInfo}>
             <Text style={styles.contactName}>{name}</Text>
-            <Text style={styles.lastMessage}>{last_message.message}</Text>
+            <Text style={styles.lastMessage}>{lastMessageComponent}</Text>
           </View>
         </View>
       </TouchableHighlight>
@@ -50,7 +67,7 @@ class ChatNavPage extends Component {
     <ChatItem item={item} onPress={this.handleChatPress} />
   );
 
-  componentDidMount(){
+  async componentDidMount(){
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
       this.checkLoggedIn();
       this.getChats();
@@ -100,7 +117,7 @@ class ChatNavPage extends Component {
         })
     })
     .then(async (response) => {
-        if(response.status === 200) {
+        if(response.status === 201) {
           this.setState({ newChatName: '' });
         }else if (response.status === 401) {
           console.log("Unauthorised")
@@ -161,7 +178,14 @@ class ChatNavPage extends Component {
             onChangeText={(text) => this.setState({newChatName: text})}
             value={this.state.newChatName}
           />
-          <TouchableOpacity style={styles.createChatButton} onPress={this.createChat}>
+          <TouchableOpacity 
+            style={styles.createChatButton} 
+            onPress={() => {
+              if(this.state.newChatName.trim() !== "") {
+                this.createChat();
+              }
+            }}
+          >
             <Text style={styles.createChatButtonText}>Create Chat</Text>
           </TouchableOpacity>
         </View>
