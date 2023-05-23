@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableHighlight, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableHighlight, TouchableOpacity, TextInput, Button } from 'react-native';
 
 class ContactItem extends Component {
   render() {
@@ -24,6 +24,7 @@ class ContactsSearchPage extends Component {
     super(props);
     this.state = {
       userData: [],
+      searchInput: '',
     };
   }
 
@@ -36,9 +37,20 @@ class ContactsSearchPage extends Component {
     <ContactItem item={item} onPress={this.handleContactPress} />
   );
 
-  updateContactList = async () => {
+  handleSearchInput = (text) => {
+    this.setState({ searchInput: text });
+  };
+
+  handleSearchButtonPress = () => {
+    // You can handle your search logic here.
+    console.log('Search button pressed. Search input:', this.state.searchInput);
+    //this.searchUsers(this.state.searchInput);
+    this.updateContactList(this.state.searchInput);
+  };
+
+  updateContactList = async (search) => {
     const addedContacts = await this.getContacts();
-    const allUsers = await this.searchUsers();
+    const allUsers = await this.searchUsers(search);
     const currentUserId = parseInt(await AsyncStorage.getItem("whatsthat_user_id"));
 
     const nonAddedUsers = allUsers.filter(user => !addedContacts.some(contact => contact.user_id === user.user_id) && user.user_id !== currentUserId);
@@ -68,8 +80,20 @@ class ContactsSearchPage extends Component {
     }
   }
 
-  searchUsers = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/search?search_in=all&limit=20&offset=0',
+  searchUsers = async (search) => {
+
+    let request = '';
+
+    if (search === undefined || search.trim() === '') {
+      request = '';
+    } else {
+      request = 'q=' + search + '&';
+    }
+
+    console.log(search);
+    console.log(request);
+
+    return fetch('http://127.0.0.1:3333/api/1.0.0/search?' + request + 'search_in=all&limit=20&offset=0',
     {
       method: 'GET',
       headers: { 
@@ -127,33 +151,6 @@ class ContactsSearchPage extends Component {
     });
   }
 
-  logout = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/logout',
-    {
-        method: 'POST',
-        headers: { 
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-        }
-    })
-    .then(async (response) => {
-        if(response.status === 200) {
-            await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_user_id")
-            this.props.navigation.navigate('Login')
-        }else if (response.status === 401) {
-            console.log("Unauthorised")
-            await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_user_id")
-            this.props.navigation.navigate('Login')
-        }else{
-            this.setState({ error: 'An error has occured' });
-        }
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  }
-
   render() {
     return (
       <View style={styles.container}>
@@ -166,9 +163,20 @@ class ContactsSearchPage extends Component {
           keyExtractor={(item) => item.user_id.toString()}
           style={styles.contactList}
         />
-        <TouchableOpacity style={styles.button} onPress={this.logout}>
-          <Text style={styles.buttonText}>Logout</Text>
-        </TouchableOpacity>
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            onChangeText={this.handleSearchInput}
+            value={this.state.searchInput}
+            placeholder="Enter a name"
+          />
+          <TouchableOpacity
+            style={styles.searchButton}
+            onPress={this.handleSearchButtonPress}
+          >
+            <Text style={styles.searchButtonText}>Search</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -247,6 +255,34 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'left',
     flex: 1,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 10,
+  },
+  searchInput: {
+    flex: 1,
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginRight: 10,
+  },
+  searchButton: {
+    height: 50,
+    backgroundColor: '#007bff',
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+  },
+  searchButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 
