@@ -280,7 +280,7 @@ class ChatScreen extends Component {
           const deletedUserId = parseInt(user_id);
 
           if (deletedUserId === currentUserId) {
-            this.props.navigation.goBack();
+            this.props.navigation.navigate('Chatnav');
           } else {
             console.log(user_id);
             console.log(currentUserId);

@@ -3,6 +3,20 @@ import React, { Component } from 'react';
 import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity } from 'react-native';
 
 class ContactItem extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      user_id: '',
+      photo: null,
+      isLoading: true,
+    };
+  }
+
+  async componentDidMount() {
+    const { item } = this.props;
+    this.getProfileImage(item.user_id);
+  }
+
   handleUnblockButton = (contact) => {
     const user_id = contact.user_id;
     this.unblockContact(user_id).then(() => {
@@ -39,13 +53,57 @@ class ContactItem extends Component {
       });
   }
 
+  getProfileImage = async (user_id) => {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
+    {
+      method: 'GET',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
+    })
+      .then(async (response) => {
+        if (response.status === 200) {
+          console.log('Photo successfully pulled');
+          const resBlob = await response.blob();
+          const data = URL.createObjectURL(resBlob);
+          console.log(data);
+          
+          this.setState({
+            photo: data,
+            isLoading: false
+        })
+        } else if (response.status === 401) {
+          console.log('Unauthorized');
+        } else if (response.status === 404) {
+          console.log('Not Found');
+        } else if (response.status === 500) {
+          console.log('Server Error');
+        } else {
+          console.log('Something went wrong');
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        this.setState({photo: null});
+      });
+  };
+
   render() {
     const { item, onPress } = this.props;
     const { first_name, last_name } = item;
 
+    const initials = first_name[0] + last_name[0];
+
     return (
       <TouchableHighlight underlayColor="#ddd" onPress={() => onPress(item)}>
         <View style={styles.contactItem}>
+          {this.state.photo ? (
+            <Image style={styles.contactImage} source={{ uri: this.state.photo }} />
+          ) : (
+            <View style={styles.contactInitialsContainer}>
+              <Text style={styles.contactInitials}>{initials.toUpperCase()}</Text>
+            </View>
+          )}
           <View style={styles.contactInfo}>
             <Text style={styles.contactName}>{first_name + " " + last_name}</Text>
           </View>
@@ -191,6 +249,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderColor: '#ddd',
+    alignItems: 'center',
   },
   profilePic: {
     width: 60,
@@ -273,6 +332,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#007bff',
     fontWeight: 'bold',
+  },
+  contactImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 30,
+    marginRight: 10,
+  },
+  contactInitialsContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'grey',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  contactInitials: {
+    color: 'white',
+    fontSize: 18,
   },
 });
 
