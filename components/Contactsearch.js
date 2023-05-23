@@ -1,14 +1,15 @@
+/* eslint-disable max-classes-per-file */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableHighlight, TouchableOpacity, TextInput, Image } from 'react-native';
+import {
+  StyleSheet, Text, View, FlatList, TouchableHighlight, TouchableOpacity, TextInput, Image,
+} from 'react-native';
 
 class ContactItem extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      user_id: '',
       photo: null,
-      isLoading: true,
     };
   }
 
@@ -17,40 +18,39 @@ class ContactItem extends Component {
     this.getProfileImage(item.user_id);
   }
 
-  getProfileImage = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
+  getProfileImage = async (userId) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/user/${userId}/photo`,
     {
       method: 'GET',
       headers: {
         'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
       },
+    },
+  )
+    .then(async (response) => {
+      if (response.status === 200) {
+        console.log('Photo successfully pulled');
+        const resBlob = await response.blob();
+        const data = URL.createObjectURL(resBlob);
+        console.log(data);
+
+        this.setState({
+          photo: data,
+        });
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
-      .then(async (response) => {
-        if (response.status === 200) {
-          console.log('Photo successfully pulled');
-          const resBlob = await response.blob();
-          const data = URL.createObjectURL(resBlob);
-          console.log(data);
-          
-          this.setState({
-            photo: data,
-            isLoading: false
-        })
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 404) {
-          console.log('Not Found');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          console.log('Something went wrong');
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        this.setState({photo: null});
-      });
-  };
+    .catch((error) => {
+      console.error(error);
+      this.setState({ photo: null });
+    });
 
   render() {
     const { item, onPress } = this.props;
@@ -61,14 +61,14 @@ class ContactItem extends Component {
     return (
       <TouchableHighlight underlayColor="#ddd" onPress={() => onPress(item)}>
         <View style={styles.contactItem}>
-            {this.state.photo ? (
-              <Image style={styles.contactImage} source={{ uri: this.state.photo }} />
-            ) : (
-              <View style={styles.contactInitialsContainer}>
-                <Text style={styles.contactInitials}>{initials.toUpperCase()}</Text>
-              </View>
-            )}
-            <Text style={styles.contactName}>{given_name + ' ' + family_name}</Text>
+          {this.state.photo ? (
+            <Image style={styles.contactImage} source={{ uri: this.state.photo }} />
+          ) : (
+            <View style={styles.contactInitialsContainer}>
+              <Text style={styles.contactInitials}>{initials.toUpperCase()}</Text>
+            </View>
+          )}
+          <Text style={styles.contactName}>{`${given_name} ${family_name}`}</Text>
         </View>
       </TouchableHighlight>
     );
@@ -84,36 +84,6 @@ class ContactsSearchPage extends Component {
     };
   }
 
-  handleContactPress = (contact) => {
-    const user_id = contact.user_id;
-    this.addContact(user_id);
-  };
-
-  renderContactItem = ({ item }) => (
-    <ContactItem item={item} onPress={this.handleContactPress} />
-  );
-
-  handleSearchInput = (text) => {
-    this.setState({ searchInput: text });
-  };
-
-  handleSearchButtonPress = () => {
-    // You can handle your search logic here.
-    console.log('Search button pressed. Search input:', this.state.searchInput);
-    //this.searchUsers(this.state.searchInput);
-    this.updateContactList(this.state.searchInput);
-  };
-
-  updateContactList = async (search) => {
-    const addedContacts = await this.getContacts();
-    const allUsers = await this.searchUsers(search);
-    const currentUserId = parseInt(await AsyncStorage.getItem("whatsthat_user_id"));
-
-    const nonAddedUsers = allUsers.filter(user => !addedContacts.some(contact => contact.user_id === user.user_id) && user.user_id !== currentUserId);
-    
-    this.setState({ userData: nonAddedUsers });
-  };
-
   async componentDidMount() {
     this.updateContactList();
 
@@ -124,75 +94,105 @@ class ContactsSearchPage extends Component {
       this.updateContactList();
     });
   }
-  
+
   componentWillUnmount() {
     this.unsubscribe();
   }
+
+  handleContactPress = (contact) => {
+    const { user_id } = contact;
+    this.addContact(user_id);
+  };
+
+  handleSearchInput = (text) => {
+    this.setState({ searchInput: text });
+  };
+
+  handleSearchButtonPress = () => {
+    console.log('Search button pressed. Search input:', this.state.searchInput);
+    this.updateContactList(this.state.searchInput);
+  };
+
+  updateContactList = async (search) => {
+    const addedContacts = await this.getContacts();
+    const allUsers = await this.searchUsers(search);
+    const currentUserId = parseInt(await AsyncStorage.getItem('whatsthat_user_id'));
+
+    const nonAddedUsers = allUsers.filter((user) => !addedContacts.some((contact) => contact.user_id === user.user_id) && user.user_id !== currentUserId);
+
+    this.setState({ userData: nonAddedUsers });
+  };
+
+  renderContactItem = ({ item }) => (
+    <ContactItem item={item} onPress={this.handleContactPress} />
+  );
 
   checkLoggedIn = async () => {
     const value = await AsyncStorage.getItem('whatsthat_session_token');
     if (value == null) {
       this.props.navigation.navigate('Login');
     }
-  }
+  };
 
   searchUsers = async (search) => {
-
     let request = '';
 
     if (search === undefined || search.trim() === '') {
       request = '';
     } else {
-      request = 'q=' + search + '&';
+      request = `q=${search}&`;
     }
 
     console.log(search);
     console.log(request);
 
-    return fetch('http://127.0.0.1:3333/api/1.0.0/search?' + request + 'search_in=all&limit=20&offset=0',
-    {
-      method: 'GET',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
-    })
-    .then(async (response) => {
-      if (response.status === 200) {
-        console.log(response)
-        const rJson = await response.json();
-        console.log(rJson);
-        return rJson; // return the contacts
-      } else if (response.status === 400) {
-        console.log('Bad Request');
-      } else if (response.status === 401) {
-        console.log('Unauthorized');
-      } else if (response.status === 500) {
-        console.log('Server Error');
-      } else {
-        console.log('Something went wrong');
-      }
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  }
+    return fetch(
+      `http://127.0.0.1:3333/api/1.0.0/search?${request}search_in=all&limit=20&offset=0`,
+      {
+        method: 'GET',
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        },
+      },
+    )
+      .then(async (response) => {
+        if (response.status === 200) {
+          console.log(response);
+          const rJson = await response.json();
+          console.log(rJson);
+          return rJson;
+        } if (response.status === 400) {
+          console.log('Bad Request');
+        } else if (response.status === 401) {
+          console.log('Unauthorized');
+        } else if (response.status === 500) {
+          console.log('Server Error');
+        } else {
+          console.log('Something went wrong');
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
 
-  addContact = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/contact',
+  addContact = async (userId) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/user/${userId}/contact`,
     {
       method: 'POST',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
       },
       body: JSON.stringify({
-        user_id: user_id,
-      })
-    })
+        userId,
+      }),
+    },
+  )
     .then(async (response) => {
-      console.log(response)
-      
+      console.log(response);
+
       if (response.status === 200) {
-        console.log('Sucessfully added')
+        console.log('Sucessfully added');
         this.updateContactList();
       } else if (response.status === 400) {
         console.log('You cant add yourself as a contact');
@@ -209,22 +209,22 @@ class ContactsSearchPage extends Component {
     .catch((error) => {
       console.error(error);
     });
-  }
 
-  getContacts = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/contacts',
+  getContacts = async () => fetch(
+    'http://127.0.0.1:3333/api/1.0.0/contacts',
     {
       method: 'GET',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
-    })
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
+    },
+  )
     .then(async (response) => {
       if (response.status === 200) {
-        console.log('Sucessfully got contacts')
+        console.log('Sucessfully got contacts');
         const rJson = await response.json();
-        return rJson; // return the contacts
-      } else if (response.status === 401) {
+        return rJson;
+      } if (response.status === 401) {
         console.log('Unauthorized');
       } else if (response.status === 500) {
         console.log('Server Error');
@@ -235,7 +235,6 @@ class ContactsSearchPage extends Component {
     .catch((error) => {
       console.error(error);
     });
-  }
 
   render() {
     return (

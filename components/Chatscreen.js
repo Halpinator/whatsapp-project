@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { StyleSheet, FlatList, View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Modal, ScrollView, Image } from 'react-native';
+import {
+  StyleSheet, FlatList, View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Modal, Image,
+} from 'react-native';
 
 class ChatScreen extends Component {
   constructor(props) {
@@ -11,7 +13,6 @@ class ChatScreen extends Component {
       chatData: '',
       messages: [],
       newMessage: '',
-      messageId: '',
       loading: true,
       profilePicturesLoading: true,
       modalVisible: false,
@@ -22,8 +23,6 @@ class ChatScreen extends Component {
       isEditingChatName: false,
       error: '',
       errorDetails: '',
-      photo: null,
-      profilePictures: [],
     };
   }
 
@@ -54,9 +53,9 @@ class ChatScreen extends Component {
     }
   };
 
-  loadChatData = async (chat_id) => {
+  loadChatData = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id, {
+      const response = await fetch(`http://127.0.0.1:3333/api/1.0.0/chat/${this.state.chat_id}`, {
         method: 'GET',
         headers: {
           'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
@@ -64,7 +63,7 @@ class ChatScreen extends Component {
       });
 
       if (response.status === 200) {
-        console.log('Successfully loaded chat')
+        console.log('Successfully loaded chat');
         const chatData = await response.json();
         this.setState({ chatData, loading: false });
       } else if (response.status === 401) {
@@ -76,16 +75,16 @@ class ChatScreen extends Component {
       } else if (response.status === 500) {
         console.log('Server Error');
       } else {
-        console.error("Something went wrong", response.status);
+        console.error('Something went wrong', response.status);
       }
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
   loadMessages = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id, {
+      const response = await fetch(`http://127.0.0.1:3333/api/1.0.0/chat/${this.state.chat_id}`, {
         method: 'GET',
         headers: {
           'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
@@ -116,121 +115,117 @@ class ChatScreen extends Component {
     }
   };
 
-  sendMessages = async (message) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/message',
+  sendMessages = async () => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/chat/${this.state.chat_id}/message`,
     {
-        method: 'POST',
-        headers: { 
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: this.state.newMessage,
-        })
-    })
+      method: 'POST',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: this.state.newMessage,
+      }),
+    },
+  )
     .then(async (response) => {
-        if (response.status === 200) {
-          console.log("Successfully sent message")
-          this.setState({ newMessage: '' });
-        } else if (response.status === 400) {
-          console.log('Bad Request');
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 403) {
-          console.log('Forbidden');
-        } else if (response.status === 404) {
-          console.log('Not Found');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          console.log('Something went wrong')
-        }
-        await this.loadMessages();
+      if (response.status === 200) {
+        console.log('Successfully sent message');
+        this.setState({ newMessage: '' });
+      } else if (response.status === 400) {
+        console.log('Bad Request');
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 403) {
+        console.log('Forbidden');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
+      await this.loadMessages();
     })
     .catch((error) => {
       console.error(error);
     });
-  }
 
-  deleteMessages = async (messageId) => {
-    return fetch(
-      'http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/message/' + messageId,
-      {
-        method: 'DELETE',
-        headers: {
-          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-          'Content-Type': 'application/json',
-        },
-      }
-    )
-      .then(async (response) => {
-        if (response.status === 200) {
-          console.log("Successfully deleted message")
-          await this.loadMessages();
-        } else if (response.status === 400) {
-          console.log('Bad Request');
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 403) {
-          console.log('Forbidden');
-        } else if (response.status === 404) {
-          console.log('Not Found');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          console.log('Something went wrong');
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  };
-
-  updateMessage = async (messageId) => {
-    return fetch(
-      'http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/message/' + this.state.editingMessageId,
-      {
-        method: 'PATCH',
-        headers: {
-          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: this.state.editingMessageText,
-        }),
-      }
-    )
-      .then(async (response) => {
-        if (response.status === 200) {
-          this.setState({
-            isEditing: false,
-            editingMessageText: '',
-            submitButtonText: 'Send',
-          });
-          console.log('Message successfully updated');
-        } else if (response.status === 400) {
-          console.log('Bad Request');
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 403) {
-          console.log('Forbidden');
-        } else if (response.status === 404) {
-          console.log('Not Found');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          console.log('Something went wrong');
-        }
+  deleteMessages = async (messageId) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/chat/${this.state.chat_id}/message/${messageId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        'Content-Type': 'application/json',
+      },
+    },
+  )
+    .then(async (response) => {
+      if (response.status === 200) {
+        console.log('Successfully deleted message');
         await this.loadMessages();
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  };
+      } else if (response.status === 400) {
+        console.log('Bad Request');
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 403) {
+        console.log('Forbidden');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+
+  updateMessage = async () => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/chat/${this.state.chat_id}/message/${this.state.editingMessageId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: this.state.editingMessageText,
+      }),
+    },
+  )
+    .then(async (response) => {
+      if (response.status === 200) {
+        this.setState({
+          isEditing: false,
+          editingMessageText: '',
+          submitButtonText: 'Send',
+        });
+        console.log('Message successfully updated');
+      } else if (response.status === 400) {
+        console.log('Bad Request');
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 403) {
+        console.log('Forbidden');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
+      await this.loadMessages();
+    })
+    .catch((error) => {
+      console.error(error);
+    });
 
   updateChatName = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id, {
+      const response = await fetch(`http://127.0.0.1:3333/api/1.0.0/chat/${this.state.chat_id}`, {
         method: 'PATCH',
         headers: {
           'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
@@ -263,46 +258,44 @@ class ChatScreen extends Component {
     }
   };
 
-  removeUser = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/user/' + user_id,
+  removeUser = async (userId) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/chat/${this.state.chat_id}/user/${userId}`,
     {
       method: 'DELETE',
       headers: {
         'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
         'Content-Type': 'application/json',
       },
-    })
-      .then(async (response) => {
-        if (response.status === 200) {
-          console.log('User successfully removed.');
+    },
+  )
+    .then(async (response) => {
+      if (response.status === 200) {
+        console.log('User successfully removed.');
 
-          const currentUserId = parseInt(await AsyncStorage.getItem('whatsthat_user_id'));
-          const deletedUserId = parseInt(user_id);
+        const currentUserId = parseInt(await AsyncStorage.getItem('whatsthat_user_id'));
+        const deletedUserId = parseInt(user_id);
 
-          if (deletedUserId === currentUserId) {
-            this.props.navigation.navigate('Chatnav');
-          } else {
-            console.log(user_id);
-            console.log(currentUserId);
-            await this.loadChatData();
-          }
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 403) {
-          console.log('Forbidden');
-        } else if (response.status === 404) {
-          console.log('Not Found');
-        } else if (response.status === 500) {
-          console.log('Server Error');
+        if (deletedUserId === currentUserId) {
+          this.props.navigation.navigate('Chatnav');
         } else {
-          console.log('Something went wrong');
+          await this.loadChatData();
         }
-        await this.loadMessages();
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  };
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 403) {
+        console.log('Forbidden');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
+      await this.loadMessages();
+    })
+    .catch((error) => {
+      console.error(error);
+    });
 
   getAllProfileImages = async () => {
     const { messages } = this.state;
@@ -319,36 +312,36 @@ class ChatScreen extends Component {
     this.setState({ profileImages, profilePicturesLoading: false });
   };
 
-  getProfileImage = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
+  getProfileImage = async (userId) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/user/${userId}/photo`,
     {
       method: 'GET',
       headers: {
         'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
       },
+    },
+  )
+    .then(async (response) => {
+      if (response.status === 200) {
+        console.log('Photo successfully pulled');
+        const resBlob = await response.blob();
+        const data = URL.createObjectURL(resBlob);
+        console.log(data);
+        return data;
+      } if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
-      .then(async (response) => {
-        if (response.status === 200) {
-          console.log('Photo successfully pulled');
-          const resBlob = await response.blob();
-          const data = URL.createObjectURL(resBlob);
-          console.log(data);
-          return data;
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 404) {
-          console.log('Not Found');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          console.log('Something went wrong');
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        return null;
-      });
-  };
+    .catch((error) => {
+      console.error(error);
+      return null;
+    });
 
   renderMessage = ({ item }) => {
     const { chatData } = this.state;
@@ -368,8 +361,7 @@ class ChatScreen extends Component {
     const messageTextStyle = item.author.user_id === parseInt(user_id)
       ? styles.sentMessageText
       : styles.receivedMessageText;
-    const authorName =
-      item.author.user_id !== parseInt(user_id) ? item.author.first_name + ' ' + item.author.last_name : null;
+    const authorName = item.author.user_id !== parseInt(user_id) ? `${item.author.first_name} ${item.author.last_name}` : null;
 
     if (item.author.user_id === parseInt(user_id)) {
       return (
@@ -383,30 +375,29 @@ class ChatScreen extends Component {
               item.message_id,
               this.state.modalPosition?.x,
               this.state.modalPosition?.y,
-              this.handleDeleteMessage
+              this.handleDeleteMessage,
             )}
           </TouchableOpacity>
         </View>
       );
-    } else {
-      return (
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
-          {profilePicture ? (
-            <Image style={styles.headerImage} source={{ uri: profilePicture }} />
-          ) : (
-            <View style={styles.headerInitialsContainer}>
-              <Text style={styles.headerInitials}>{initials}</Text>
-            </View>
-          )}
-          <View style={{ flex: 1 }}>
-            {authorName && <Text style={styles.authorName}>{authorName}</Text>}
-            <TouchableOpacity style={messageStyle}>
-              <Text style={messageTextStyle}>{item.message}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      );
     }
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
+        {profilePicture ? (
+          <Image style={styles.headerImage} source={{ uri: profilePicture }} />
+        ) : (
+          <View style={styles.headerInitialsContainer}>
+            <Text style={styles.headerInitials}>{initials}</Text>
+          </View>
+        )}
+        <View style={{ flex: 1 }}>
+          {authorName && <Text style={styles.authorName}>{authorName}</Text>}
+          <TouchableOpacity style={messageStyle}>
+            <Text style={messageTextStyle}>{item.message}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   };
 
   showOptionsModal = (messageId, event) => {
@@ -414,7 +405,6 @@ class ChatScreen extends Component {
       modalVisible: true,
       selectedMessageId: messageId,
       modalPosition: { x: event.nativeEvent.pageX, y: event.nativeEvent.pageY },
-      messageId: messageId,
     });
   };
 
@@ -451,12 +441,12 @@ class ChatScreen extends Component {
     return (
       <Modal
         animationType="fade"
-        transparent={true}
+        transparent
         visible={modalVisible && selectedMessageId === messageId}
         onRequestClose={this.hideOptionsModal}
       >
         <TouchableOpacity onPress={this.hideOptionsModal}>
-          <View style={styles.modalOverlay}></View>
+          <View style={styles.modalOverlay} />
         </TouchableOpacity>
         <View style={[styles.modalContainer, { left: x - 130, top: y }]}>
           <TouchableOpacity style={styles.modalOption} onPress={this.handleEditMessage}>
@@ -471,7 +461,9 @@ class ChatScreen extends Component {
   };
 
   render() {
-    const { chatData, messages, loading, error, profilePicturesLoading } = this.state;
+    const {
+      chatData, messages, loading, error, profilePicturesLoading,
+    } = this.state;
 
     if (loading || profilePicturesLoading) {
       return <Text>Loading...</Text>;
@@ -495,9 +487,7 @@ class ChatScreen extends Component {
             <TextInput
               style={styles.headerTitle}
               value={name}
-              onChangeText={(text) =>
-                this.setState({ chatData: { ...chatData, name: text } })
-              }
+              onChangeText={(text) => this.setState({ chatData: { ...chatData, name: text } })}
               onSubmitEditing={this.updateChatName}
             />
           ) : (
@@ -511,14 +501,16 @@ class ChatScreen extends Component {
         </View>
         <View style={styles.membersContainer}>
           <FlatList
-            horizontal={true}
+            horizontal
             showsHorizontalScrollIndicator={false}
             data={members}
             renderItem={({ item }) => (
               <View style={styles.memberContainer}>
                 <View style={styles.memberNameContainer}>
                   <Text style={styles.memberName}>
-                    {item.first_name} {item.last_name}
+                    {item.first_name}
+                    {' '}
+                    {item.last_name}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -540,24 +532,22 @@ class ChatScreen extends Component {
           data={messages}
           renderItem={this.renderMessage}
           keyExtractor={(item) => item.message_id.toString()}
-          inverted={true}
+          inverted
         />
         <View style={styles.bottomContainer}>
           <TextInput
             style={styles.sendMessageInput}
             placeholder="Enter message"
-            onChangeText={(text) =>
-              this.setState(
-                this.state.isEditing ? { editingMessageText: text } : { newMessage: text }
-              )
-            }
+            onChangeText={(text) => this.setState(
+              this.state.isEditing ? { editingMessageText: text } : { newMessage: text },
+            )}
             value={this.state.isEditing ? this.state.editingMessageText : this.state.newMessage}
           />
           <TouchableOpacity
             style={styles.sendMessageButton}
             onPress={() => {
               if ((this.state.newMessage.trim() !== '') || (this.state.editingMessageText.trim() !== '')) {
-                this.state.isEditing ? this.updateMessage(this.state.editingMessageId) : this.sendMessages()
+                this.state.isEditing ? this.updateMessage(this.state.editingMessageId) : this.sendMessages();
               }
             }}
           >
