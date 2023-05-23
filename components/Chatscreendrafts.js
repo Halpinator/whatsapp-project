@@ -17,21 +17,10 @@ class DraftItem extends Component {
     }
   }
 
-  handleSendButton = () => {
-    this.props.onSend(this.props.id);
-  };
-
-  handleEditButton = () => {
-    this.setState({isEditing: true});
-  };
-
-  handleScheduleButton = () => {
-    this.setState({isScheduling: true});
-  };
-
-  handleDeleteButton = () => {
-    this.props.onDelete(this.props.id);
-  };
+  handleSendButton = () => this.props.onSend(this.props.id);
+  handleEditButton = () => this.setState({isEditing: true});
+  handleScheduleButton = () => this.setState({isScheduling: true});
+  handleDeleteButton = () => this.props.onDelete(this.props.id);
 
   handleDateChange = (selectedDate) => {
     const currentDate = selectedDate || this.state.date;
@@ -50,11 +39,7 @@ class DraftItem extends Component {
     }
   };
   
-
-
-  handleChangeText = (text) => {
-    this.setState({text});
-  };
+  handleChangeText = (text) => this.setState({text});
 
   handleDoneButton = () => {
     this.setState({isEditing: false});
@@ -218,9 +203,7 @@ class ChatScreenContacts extends Component {
     });
   };
 
-  handleChangeText = (text) => {
-    this.setState({text});
-  };
+  handleChangeText = (text) => this.setState({text});
 
   async componentDidMount(){
     const drafts = await AsyncStorage.getItem('drafts');

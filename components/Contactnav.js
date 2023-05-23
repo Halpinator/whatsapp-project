@@ -4,16 +4,16 @@ import { res } from 'react-email-validator';
 import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity } from 'react-native';
 
 class ContactItem extends Component {
-  constructor(props){
+  constructor(props) {
     super(props);
-    this.state ={ 
+    this.state = {
       isLoading: true,
       user_id: '',
       photo: null,
-    }
+    };
   }
 
-  async componentDidMount(){
+  async componentDidMount() {
     const { item } = this.props;
     this.getProfileImage(item.user_id);
   }
@@ -40,7 +40,7 @@ class ContactItem extends Component {
       console.error(error);
       this.setState({photo: null});
     });
-  }
+  };
 
   handleRemoveButton = (contact) => {
     const user_id = contact.user_id;
@@ -65,8 +65,7 @@ class ContactItem extends Component {
     .catch((error) => {
       console.error(error);
     });
-  }
-
+  };
 
   handleBlockButton = (contact) => {
     const user_id = contact.user_id;
@@ -91,31 +90,28 @@ class ContactItem extends Component {
     .catch((error) => {
       console.error(error);
     });
-  }
+  };
 
   render() {
     const { item, onPress } = this.props;
-
     const { first_name, last_name } = item;
-
-    const navigation = this.props.navigation;
-
     const initials = first_name[0] + last_name[0];
 
     return (
       <TouchableHighlight underlayColor="#ddd" onPress={() => onPress(item)}>
         <View style={styles.contactItem}>
           <TouchableOpacity style={styles.removeButton} onPress={() => this.handleRemoveButton(item)}>
-            <View style={styles.removeSymbol}/>
+            <View style={styles.removeSymbol} />
           </TouchableOpacity>
-          {this.state.photo ?
-              <Image style={styles.contactImage} source={{ uri: this.state.photo }}/> :
-              <View style={styles.contactInitialsContainer}>
-                <Text style={styles.contactInitials}>{initials.toUpperCase()}</Text>
-              </View>
-            }
+          {this.state.photo ? (
+            <Image style={styles.contactImage} source={{ uri: this.state.photo }} />
+          ) : (
+            <View style={styles.contactInitialsContainer}>
+              <Text style={styles.contactInitials}>{initials.toUpperCase()}</Text>
+            </View>
+          )}
           <View style={styles.contactInfo}>
-            <Text style={styles.contactName}>{first_name + " " +  last_name}</Text>
+            <Text style={styles.contactName}>{`${first_name} ${last_name}`}</Text>
           </View>
           <TouchableOpacity style={styles.blockButton} onPress={() => this.handleBlockButton(item)}>
             <Text style={styles.blockButtonText}>Block</Text>
@@ -133,7 +129,8 @@ class ContactsPage extends Component {
       userData: [],
       user_id: '',
       selectedContacts: [],
-      currentUserInfo: []
+      currentUserInfo: [],
+      photo: null,
     };
   }
 
@@ -145,16 +142,16 @@ class ContactsPage extends Component {
     <ContactItem item={item} onPress={this.handleContactPress} getContacts={this.getContacts} />
   );
 
-  async componentDidMount(){
+  async componentDidMount() {
     this.unsubscribe = this.props.navigation.addListener('focus', async () => {
-      const user_id = await AsyncStorage.getItem("whatsthat_user_id");
+      const user_id = await AsyncStorage.getItem('whatsthat_user_id');
       this.checkLoggedIn();
       this.getContacts();
       this.getUserInfo(user_id);
       this.getProfileImage(user_id);
     });
   }
-  
+
   componentWillUnmount() {
     this.unsubscribe();
   }
@@ -162,9 +159,9 @@ class ContactsPage extends Component {
   checkLoggedIn = async () => {
     const value = await AsyncStorage.getItem('whatsthat_session_token');
     if (value == null) {
-      this.props.navigation.navigate('Login')
+      this.props.navigation.navigate('Login');
     }
-  }
+  };
 
   getContacts = async () => {
     return fetch('http://127.0.0.1:3333/api/1.0.0/contacts',
@@ -261,28 +258,28 @@ class ContactsPage extends Component {
   }
 
   goToSearch = () => {
-    this.props.navigation.navigate('Contactsearch')
-  }
+    this.props.navigation.navigate('Contactsearch');
+  };
 
   render() {
-
     const { currentUserInfo, photo } = this.state;
     const { first_name, last_name } = currentUserInfo || {};
-
-    const initials = (currentUserInfo.first_name && currentUserInfo.last_name)
-      ? currentUserInfo.first_name[0] + currentUserInfo.last_name[0]
-      : "";
+    const initials =
+      currentUserInfo.first_name && currentUserInfo.last_name
+        ? currentUserInfo.first_name[0] + currentUserInfo.last_name[0]
+        : '';
 
     return (
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => this.props.navigation.navigate('Camera')}>
-            {photo ?
-              <Image style={styles.headerImage} source={{ uri: photo }}/> :
+            {photo ? (
+              <Image style={styles.headerImage} source={{ uri: photo }} />
+            ) : (
               <View style={styles.headerInitialsContainer}>
                 <Text style={styles.headerInitials}>{initials.toUpperCase()}</Text>
               </View>
-            }
+            )}
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Hi {first_name}</Text>
           <TouchableOpacity style={styles.blockListButton} onPress={() => this.props.navigation.navigate('Blocklistnav')}>

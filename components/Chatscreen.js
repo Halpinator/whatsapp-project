@@ -23,19 +23,18 @@ class ChatScreen extends Component {
       error: '',
       errorDetails: '',
       photo: null,
-      profilePictures:[],
+      profilePictures: [],
     };
   }
 
   async componentDidMount() {
-    const chat_id = await AsyncStorage.getItem("whatsthat_chat_id");
-    const user_id = await AsyncStorage.getItem("whatsthat_user_id");
+    const chat_id = await AsyncStorage.getItem('whatsthat_chat_id');
+    const user_id = await AsyncStorage.getItem('whatsthat_user_id');
     this.setState({ user_id });
     this.setState({ chat_id }, () => {
       this.loadChatData();
       this.loadMessages();
     });
-
 
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
       this.checkLoggedIn();
@@ -51,16 +50,16 @@ class ChatScreen extends Component {
   checkLoggedIn = async () => {
     const value = await AsyncStorage.getItem('whatsthat_session_token');
     if (value == null) {
-      this.props.navigation.navigate('Login')
+      this.props.navigation.navigate('Login');
     }
-  }
+  };
 
   loadChatData = async () => {
     try {
       const response = await fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id, {
         method: 'GET',
         headers: {
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
         },
       });
 
@@ -76,14 +75,14 @@ class ChatScreen extends Component {
       console.error(error);
       this.setState({ error: 'An error occurred', loading: false });
     }
-  }
+  };
 
   loadMessages = async () => {
     try {
       const response = await fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id, {
         method: 'GET',
         headers: {
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
         },
       });
 
@@ -94,58 +93,60 @@ class ChatScreen extends Component {
           this.getAllProfileImages();
         });
       } else if (response.status === 401) {
-        console.log("Unauthorised");
+        console.log('Unauthorised');
       } else {
         this.setState({ error: 'An error occurred' });
-        console.log("Something went wrong.");
+        console.log('Something went wrong.');
       }
     } catch (error) {
       console.error(error);
-      console.log("Something went wrong.");
+      console.log('Something went wrong.');
     }
-  }
+  };
 
   sendMessages = async () => {
     return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/message',
     {
-        method: 'POST',
-        headers: { 
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: this.state.newMessage,
-        })
+      method: 'POST',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: this.state.newMessage,
+      }),
     })
-    .then(async (response) => {
-        if(response.status === 200) {
+      .then(async (response) => {
+        if (response.status === 200) {
           this.setState({ newMessage: '' });
-        }else if (response.status === 401) {
-          console.log("Unauthorised")
-        }else{
-          this.setState({ error: 'An error has occured' });
+        } else if (response.status === 401) {
+          console.log('Unauthorised');
+        } else {
+          this.setState({ error: 'An error has occurred' });
         }
         await this.loadMessages();
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
 
   deleteMessages = async (messageId) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/message/' + messageId, 
-    {
-      method: 'DELETE',
-      headers: {
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
-        "Content-Type": "application/json"
-      },
-    })
+    return fetch(
+      'http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/message/' + messageId,
+      {
+        method: 'DELETE',
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+          'Content-Type': 'application/json',
+        },
+      }
+    )
       .then(async (response) => {
         if (response.status === 200) {
           await this.loadMessages();
         } else if (response.status === 401) {
-          console.log("Unauthorised")
+          console.log('Unauthorised');
         } else {
           this.setState({ error: 'An error has occurred' });
         }
@@ -156,36 +157,40 @@ class ChatScreen extends Component {
   };
 
   updateMessage = async (messageId) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/message/' + this.state.editingMessageId,
-    {
+    return fetch(
+      'http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/message/' + this.state.editingMessageId,
+      {
         method: 'PATCH',
-        headers: { 
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
-          "Content-Type": "application/json"
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message: this.state.editingMessageText,
-        })
-    })
-    .then(async (response) => {
-        if(response.status === 200) {
+        }),
+      }
+    )
+      .then(async (response) => {
+        if (response.status === 200) {
           this.setState({
             isEditing: false,
             editingMessageText: '',
             submitButtonText: 'Send',
           });
-          console.log("Message updated")
-        }else if (response.status === 401) {
-          console.log("Unauthorised")
-        }else{
+          console.log('Message updated');
+        } else if (response.status === 401) {
+          console.log('Unauthorised');
+        } else {
           this.setState({ error: 'An error has occured' });
-          this.setState({errorDetails: `Status: ${response.status}, Status Text: ${response.statusText}`});
+          this.setState({
+            errorDetails: `Status: ${response.status}, Status Text: ${response.statusText}`,
+          });
         }
         await this.loadMessages();
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   };
 
   updateChatName = async () => {
@@ -193,68 +198,67 @@ class ChatScreen extends Component {
       const response = await fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id, {
         method: 'PATCH',
         headers: {
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
-          "Content-Type": "application/json",
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           name: this.state.chatData.name,
         }),
       });
-  
+
       if (response.status === 200) {
-        console.log("Chat name updated");
+        console.log('Chat name updated');
         this.handleChatNameEdit();
       } else if (response.status === 401) {
-        console.log("Unauthorized");
+        console.log('Unauthorized');
       } else {
-        this.setState({ error: "An error has occurred" });
+        this.setState({ error: 'An error has occurred' });
       }
     } catch (error) {
       console.error(error);
-      this.setState({ error: "An error has occurred" });
+      this.setState({ error: 'An error has occurred' });
     }
   };
-  
 
   removeUser = async (user_id) => {
     return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/user/' + user_id,
     {
-        method: 'DELETE',
-        headers: { 
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
-          "Content-Type": "application/json"
-        },
+      method: 'DELETE',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        'Content-Type': 'application/json',
+      },
     })
-    .then(async (response) => {
-        if(response.status === 200) {
-          console.log("User removed.");
+      .then(async (response) => {
+        if (response.status === 200) {
+          console.log('User removed.');
 
-          const currentUserId = parseInt(await AsyncStorage.getItem("whatsthat_user_id"));
-          const deletedUserId = parseInt(user_id)
+          const currentUserId = parseInt(await AsyncStorage.getItem('whatsthat_user_id'));
+          const deletedUserId = parseInt(user_id);
 
-          if(deletedUserId === currentUserId) {
+          if (deletedUserId === currentUserId) {
             this.props.navigation.goBack();
-          }
-          else {
+          } else {
             console.log(user_id);
             console.log(currentUserId);
             await this.loadChatData();
           }
-        }else if (response.status === 401) {
-          console.log("Unauthorised")
-        }else{
+        } else if (response.status === 401) {
+          console.log('Unauthorised');
+        } else {
           this.setState({ error: 'An error has occured' });
-          this.setState({errorDetails: `Status: ${response.status}, Status Text: ${response.statusText}`});
+          this.setState({
+            errorDetails: `Status: ${response.status}, Status Text: ${response.statusText}`,
+          });
         }
         await this.loadMessages();
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   };
 
   getAllProfileImages = async () => {
-
     const { messages } = this.state;
 
     const profileImages = {};
@@ -263,38 +267,37 @@ class ChatScreen extends Component {
       const profileImage = await this.getProfileImage(userId);
       profileImages[userId] = profileImage;
     });
-  
+
     await Promise.all(promises);
-  
+
     this.setState({ profileImages, profilePicturesLoading: false });
-  }
+  };
 
   // Get Profile Image Function
   getProfileImage = async (user_id) => {
     return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
     {
       method: 'GET',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
     })
-    .then(async (response) => {
-      const resBlob = await response.blob();
-      const data = URL.createObjectURL(resBlob);
-      console.log(data);
-      return data;
-    })
-    .catch((error) => {
-      console.error(error);
-      return null;
-    });
-  }
-  
+      .then(async (response) => {
+        const resBlob = await response.blob();
+        const data = URL.createObjectURL(resBlob);
+        console.log(data);
+        return data;
+      })
+      .catch((error) => {
+        console.error(error);
+        return null;
+      });
+  };
 
   renderMessage = ({ item }) => {
     const { chatData } = this.state;
     const { user_id } = this.state;
-  
+
     if (!chatData) {
       return null;
     }
@@ -303,42 +306,44 @@ class ChatScreen extends Component {
 
     const initials = item.author.first_name[0] + item.author.last_name[0];
 
-    //console.log(profilePicture)
-  
     const messageStyle = item.author.user_id === parseInt(user_id)
       ? styles.sentMessage
       : styles.receivedMessage;
     const messageTextStyle = item.author.user_id === parseInt(user_id)
       ? styles.sentMessageText
       : styles.receivedMessageText;
-    const authorName = item.author.user_id !== parseInt(user_id)
-      ? (item.author.first_name + ' ' + item.author.last_name)
-      : null;
+    const authorName =
+      item.author.user_id !== parseInt(user_id) ? item.author.first_name + ' ' + item.author.last_name : null;
 
-    //console.log(authorName);
-  
     if (item.author.user_id === parseInt(user_id)) {
       return (
         <View>
-          <TouchableOpacity style={messageStyle} onPress={(event) => this.showOptionsModal(item.message_id, event)}>
+          <TouchableOpacity
+            style={messageStyle}
+            onPress={(event) => this.showOptionsModal(item.message_id, event)}
+          >
             <Text style={messageTextStyle}>{item.message}</Text>
-            {this.renderOptionsModal(item.message_id, this.state.modalPosition?.x, this.state.modalPosition?.y, this.handleDeleteMessage)}
+            {this.renderOptionsModal(
+              item.message_id,
+              this.state.modalPosition?.x,
+              this.state.modalPosition?.y,
+              this.handleDeleteMessage
+            )}
           </TouchableOpacity>
         </View>
       );
     } else {
       return (
         <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
-          {profilePicture ?
-            <Image style={styles.headerImage} source={{ uri: profilePicture }}/> :
+          {profilePicture ? (
+            <Image style={styles.headerImage} source={{ uri: profilePicture }} />
+          ) : (
             <View style={styles.headerInitialsContainer}>
               <Text style={styles.headerInitials}>{initials}</Text>
             </View>
-          }
+          )}
           <View style={{ flex: 1 }}>
-            {authorName && (
-              <Text style={styles.authorName}>{authorName}</Text>
-            )}
+            {authorName && <Text style={styles.authorName}>{authorName}</Text>}
             <TouchableOpacity style={messageStyle}>
               <Text style={messageTextStyle}>{item.message}</Text>
             </TouchableOpacity>
@@ -353,7 +358,7 @@ class ChatScreen extends Component {
       modalVisible: true,
       selectedMessageId: messageId,
       modalPosition: { x: event.nativeEvent.pageX, y: event.nativeEvent.pageY },
-      messageId: messageId, 
+      messageId: messageId,
     });
   };
 
@@ -364,14 +369,14 @@ class ChatScreen extends Component {
   handleEditMessage = () => {
     const { messages, selectedMessageId } = this.state;
     const messageToEdit = messages.find((message) => message.message_id === selectedMessageId);
-  
+
     this.setState({
       isEditing: true,
       editingMessageId: selectedMessageId,
       editingMessageText: messageToEdit.message,
       submitButtonText: 'Revise',
     });
-  
+
     this.hideOptionsModal();
   };
 
@@ -386,7 +391,7 @@ class ChatScreen extends Component {
 
   renderOptionsModal = (messageId, x, y) => {
     const { modalVisible, selectedMessageId } = this.state;
-  
+
     return (
       <Modal
         animationType="fade"
@@ -434,7 +439,9 @@ class ChatScreen extends Component {
             <TextInput
               style={styles.headerTitle}
               value={name}
-              onChangeText={(text) => this.setState({ chatData: { ...chatData, name: text } })}
+              onChangeText={(text) =>
+                this.setState({ chatData: { ...chatData, name: text } })
+              }
               onSubmitEditing={this.updateChatName}
             />
           ) : (
@@ -453,13 +460,18 @@ class ChatScreen extends Component {
             data={members}
             renderItem={({ item }) => (
               <View style={styles.memberContainer}>
-              <View style={styles.memberNameContainer}>
-                <Text style={styles.memberName}>{item.first_name} {item.last_name}</Text>
+                <View style={styles.memberNameContainer}>
+                  <Text style={styles.memberName}>
+                    {item.first_name} {item.last_name}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.memberButton}
+                  onPress={() => this.removeUser(item.user_id) && console.log('Pressed')}
+                >
+                  <Text style={styles.memberButtonText}>X </Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity style={styles.memberButton} onPress={() => this.removeUser(item.user_id) && console.log('PRessed')}>
-                <Text style={styles.memberButtonText}>X </Text>
-              </TouchableOpacity>
-            </View>
             )}
             keyExtractor={(item) => item.user_id.toString()}
             contentContainerStyle={{
@@ -478,12 +490,18 @@ class ChatScreen extends Component {
           <TextInput
             style={styles.sendMessageInput}
             placeholder="Enter message"
-            onChangeText={(text) => this.setState(this.state.isEditing ? { editingMessageText: text } : { newMessage: text })}
+            onChangeText={(text) =>
+              this.setState(
+                this.state.isEditing ? { editingMessageText: text } : { newMessage: text }
+              )
+            }
             value={this.state.isEditing ? this.state.editingMessageText : this.state.newMessage}
           />
           <TouchableOpacity
             style={styles.sendMessageButton}
-            onPress={() => (this.state.isEditing ? this.updateMessage(this.state.editingMessageId) : this.sendMessages())}
+            onPress={() =>
+              this.state.isEditing ? this.updateMessage(this.state.editingMessageId) : this.sendMessages()
+            }
           >
             <Text style={styles.sendMessageButtonText}>{this.state.submitButtonText}</Text>
           </TouchableOpacity>

@@ -1,18 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { res } from 'react-email-validator';
 import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity } from 'react-native';
 
 class ContactItem extends Component {
-  constructor(props){
-    super(props);
-    this.state ={ 
-      isLoading: true,
-      contactListData: [],
-      user_id: ''
-    }
-  }
-
   handleRemoveButton = (contact) => {
     const user_id = contact.user_id;
     this.removeContact(user_id).then(() => {
@@ -24,18 +14,18 @@ class ContactItem extends Component {
     return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/contact',
     {
       method: 'DELETE',
-      headers: { 
+      headers: {
         "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
       }
     })
-    .then(async (response) => {
-      console.log(response)
-      const rText = await response.text();
-      console.log(rText);
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+      .then(async (response) => {
+        console.log(response);
+        const rText = await response.text();
+        console.log(rText);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   }
 
   handleUnblockButton = (contact) => {
@@ -49,32 +39,29 @@ class ContactItem extends Component {
     return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/block',
     {
       method: 'DELETE',
-      headers: { 
+      headers: {
         "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
       }
     })
-    .then(async (response) => {
-      console.log(response)
-      const rText = await response.text();
-      console.log(rText);
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+      .then(async (response) => {
+        console.log(response);
+        const rText = await response.text();
+        console.log(rText);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   }
 
   render() {
     const { item, onPress } = this.props;
-
-    const { first_name, last_name} = item;
-
-    const navigation = this.props.navigation;
+    const { first_name, last_name } = item;
 
     return (
       <TouchableHighlight underlayColor="#ddd" onPress={() => onPress(item)}>
         <View style={styles.contactItem}>
           <View style={styles.contactInfo}>
-            <Text style={styles.contactName}>{first_name + " " +  last_name}</Text>
+            <Text style={styles.contactName}>{first_name + " " + last_name}</Text>
           </View>
           <TouchableOpacity style={styles.unblockButton} onPress={() => this.handleUnblockButton(item)}>
             <Text style={styles.unblockButtonText}>Unblock</Text>
@@ -85,7 +72,7 @@ class ContactItem extends Component {
   }
 }
 
-class ContactsPage extends Component {
+class BlockedContactsPage extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -103,13 +90,13 @@ class ContactsPage extends Component {
     <ContactItem item={item} onPress={this.handleContactPress} getBlockList={this.getBlockList} />
   );
 
-  componentDidMount(){
+  componentDidMount() {
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
       this.checkLoggedIn();
       this.getBlockList();
     });
   }
-  
+
   componentWillUnmount() {
     this.unsubscribe();
   }
@@ -125,55 +112,52 @@ class ContactsPage extends Component {
     return fetch('http://127.0.0.1:3333/api/1.0.0/blocked',
     {
       method: 'GET',
-      headers: { 
+      headers: {
         "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
       }
     })
-    .then(async (response) => {
-      console.log(response.status)
-      console.log(response.statusText)
-      const rJson = await response.json();
-      console.log(rJson);
-      this.setState({ userData: rJson });
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+      .then(async (response) => {
+        console.log(response.status);
+        console.log(response.statusText);
+        const rJson = await response.json();
+        console.log(rJson);
+        this.setState({ userData: rJson });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   }
 
   logout = async () => {
     return fetch('http://127.0.0.1:3333/api/1.0.0/logout',
     {
-        method: 'POST',
-        headers: { 
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-        }
+      method: 'POST',
+      headers: {
+        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+      }
     })
-    .then(async (response) => {
-        if(response.status === 200) {
-            await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_user_id")
-            this.props.navigation.navigate('Login')
-        }else if (response.status === 401) {
-            console.log("Unauthorised")
-            await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_user_id")
-            this.props.navigation.navigate('Login')
-        }else{
-            this.setState({ error: 'An error has occured' });
+      .then(async (response) => {
+        if (response.status === 200) {
+          await AsyncStorage.removeItem("whatsthat_session_token");
+          await AsyncStorage.removeItem("whatsthat_user_id");
+          this.props.navigation.navigate('Login');
+        } else if (response.status === 401) {
+          console.log("Unauthorised");
+          await AsyncStorage.removeItem("whatsthat_session_token");
+          await AsyncStorage.removeItem("whatsthat_user_id");
+          this.props.navigation.navigate('Login');
+        } else {
+          this.setState({ error: 'An error has occurred' });
         }
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   }
 
-  goToSearch = () => {
-    this.props.navigation.navigate('Contactsearch')
-  }
+  goToSearch = () => { this.props.navigation.navigate('Contactsearch'); }
 
   render() {
-
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -294,4 +278,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ContactsPage;
+export default BlockedContactsPage;

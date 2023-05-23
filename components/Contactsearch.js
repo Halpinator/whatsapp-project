@@ -1,28 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { Component, useState } from 'react';
-import { res } from 'react-email-validator';
-import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity } from 'react-native';
+import React, { Component } from 'react';
+import { StyleSheet, Text, View, FlatList, TouchableHighlight, TouchableOpacity } from 'react-native';
 
 class ContactItem extends Component {
-  constructor(props){
-    super(props);
-    this.state ={ 
-      isLoading: true,
-      contactListData: []
-    }
-  }
-
   render() {
     const { item, onPress } = this.props;
     const { given_name, family_name } = item;
-
-    const navigation = this.props.navigation;
 
     return (
       <TouchableHighlight underlayColor="#ddd" onPress={() => onPress(item)}>
         <View style={styles.contactItem}>
           <View style={styles.contactInfo}>
-            <Text style={styles.contactName}>{given_name + " " +  family_name}</Text>
+            <Text style={styles.contactName}>{given_name + ' ' + family_name}</Text>
           </View>
         </View>
       </TouchableHighlight>
@@ -35,7 +24,6 @@ class ContactsSearchPage extends Component {
     super(props);
     this.state = {
       userData: [],
-      user_id: '',
     };
   }
 
@@ -53,14 +41,12 @@ class ContactsSearchPage extends Component {
     const allUsers = await this.searchUsers();
     const currentUserId = parseInt(await AsyncStorage.getItem("whatsthat_user_id"));
 
-    //const nonAddedUsers = allUsers.filter(user => { !addedContacts.some(contact => contact.user_id === user.user_id) && contact.user_id !== currentUserId;});
-
     const nonAddedUsers = allUsers.filter(user => !addedContacts.some(contact => contact.user_id === user.user_id) && user.user_id !== currentUserId);
     
     this.setState({ userData: nonAddedUsers });
   };
 
-  async componentDidMount(){
+  async componentDidMount() {
     this.updateContactList();
 
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
@@ -78,7 +64,7 @@ class ContactsSearchPage extends Component {
   checkLoggedIn = async () => {
     const value = await AsyncStorage.getItem('whatsthat_session_token');
     if (value == null) {
-      this.props.navigation.navigate('Login')
+      this.props.navigation.navigate('Login');
     }
   }
 
@@ -169,7 +155,6 @@ class ContactsSearchPage extends Component {
   }
 
   render() {
-
     return (
       <View style={styles.container}>
         <View style={styles.header}>

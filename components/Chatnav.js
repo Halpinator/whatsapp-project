@@ -4,18 +4,18 @@ import { res } from 'react-email-validator';
 import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity, TextInput } from 'react-native';
 
 class ChatItem extends Component {
-  constructor(props){
+  constructor(props) {
     super(props);
-    this.state ={ 
+    this.state = {
       isLoading: true,
       contactListData: [],
       userId: '',
-    }
+    };
   }
 
-  async componentDidMount(){
-    const userId = await AsyncStorage.getItem("whatsthat_user_id");
-    this.setState({userId: parseInt(userId)});
+  async componentDidMount() {
+    const userId = await AsyncStorage.getItem('whatsthat_user_id');
+    this.setState({ userId: parseInt(userId) });
   }
 
   render() {
@@ -26,11 +26,11 @@ class ChatItem extends Component {
     const navigation = this.props.navigation;
 
     let lastMessageComponent;
-    if(last_message && last_message.author) {
-      lastMessageComponent = 
-        userId === last_message.author.user_id 
-        ? 'You: ' + last_message.message 
-        : last_message.author.first_name + ': ' + last_message.message;
+    if (last_message && last_message.author) {
+      lastMessageComponent =
+        userId === last_message.author.user_id
+          ? 'You: ' + last_message.message
+          : last_message.author.first_name + ': ' + last_message.message;
     } else {
       lastMessageComponent = 'No message';
     }
@@ -54,26 +54,24 @@ class ChatNavPage extends Component {
     this.state = {
       chatData: [],
       chat_id: '',
-      newChatName: ''
+      newChatName: '',
     };
   }
 
   handleChatPress = (chat) => {
-    AsyncStorage.setItem("whatsthat_chat_id", chat.chat_id);
-    this.props.navigation.navigate('Chattab')
+    AsyncStorage.setItem('whatsthat_chat_id', chat.chat_id);
+    this.props.navigation.navigate('Chattab');
   };
 
-  renderChatItem = ({ item }) => (
-    <ChatItem item={item} onPress={this.handleChatPress} />
-  );
+  renderChatItem = ({ item }) => <ChatItem item={item} onPress={this.handleChatPress} />;
 
-  async componentDidMount(){
+  async componentDidMount() {
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
       this.checkLoggedIn();
       this.getChats();
     });
   }
-  
+
   componentWillUnmount() {
     this.unsubscribe();
   }
@@ -81,85 +79,81 @@ class ChatNavPage extends Component {
   checkLoggedIn = async () => {
     const value = await AsyncStorage.getItem('whatsthat_session_token');
     if (value == null) {
-      this.props.navigation.navigate('Login')
+      this.props.navigation.navigate('Login');
     }
-  }
+  };
 
   getChats = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/chat',
-    {
+    return fetch('http://127.0.0.1:3333/api/1.0.0/chat', {
       method: 'GET',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
     })
-    .then(async (response) => {
-      console.log(response)
-      const rJson = await response.json();
-      console.log(rJson);
-      this.setState({ chatData: rJson });
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  }
+      .then(async (response) => {
+        console.log(response);
+        const rJson = await response.json();
+        console.log(rJson);
+        this.setState({ chatData: rJson });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
 
   createChat = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/chat',
-    {
-        method: 'POST',
-        headers: { 
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name: this.state.newChatName,
-        })
+    return fetch('http://127.0.0.1:3333/api/1.0.0/chat', {
+      method: 'POST',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: this.state.newChatName,
+      }),
     })
-    .then(async (response) => {
-        if(response.status === 201) {
+      .then(async (response) => {
+        if (response.status === 201) {
           this.setState({ newChatName: '' });
-        }else if (response.status === 401) {
-          console.log("Unauthorised")
-        }else{
-          this.setState({ error: 'An error has occured' });
+        } else if (response.status === 401) {
+          console.log('Unauthorised');
+        } else {
+          this.setState({ error: 'An error has occurred' });
         }
         await this.getChats();
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
 
   logout = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/logout',
-    {
-        method: 'POST',
-        headers: { 
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-        }
+    return fetch('http://127.0.0.1:3333/api/1.0.0/logout', {
+      method: 'POST',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
     })
-    .then(async (response) => {
-        if(response.status === 200) {
-            await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_user_id")
-            this.props.navigation.navigate('Login')
-        }else if (response.status === 401) {
-            console.log("Unauthorised")
-            await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_user_id")
-            this.props.navigation.navigate('Login')
-        }else{
-            this.setState({ error: 'An error has occured' });
+      .then(async (response) => {
+        if (response.status === 200) {
+          await AsyncStorage.removeItem('whatsthat_session_token');
+          await AsyncStorage.removeItem('whatsthat_user_id');
+          this.props.navigation.navigate('Login');
+        } else if (response.status === 401) {
+          console.log('Unauthorised');
+          await AsyncStorage.removeItem('whatsthat_session_token');
+          await AsyncStorage.removeItem('whatsthat_user_id');
+          this.props.navigation.navigate('Login');
+        } else {
+          this.setState({ error: 'An error has occurred' });
         }
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
 
   render() {
-
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -175,13 +169,13 @@ class ChatNavPage extends Component {
           <TextInput
             style={styles.createChatInput}
             placeholder="Enter chat name"
-            onChangeText={(text) => this.setState({newChatName: text})}
+            onChangeText={(text) => this.setState({ newChatName: text })}
             value={this.state.newChatName}
           />
-          <TouchableOpacity 
-            style={styles.createChatButton} 
+          <TouchableOpacity
+            style={styles.createChatButton}
             onPress={() => {
-              if(this.state.newChatName.trim() !== "") {
+              if (this.state.newChatName.trim() !== '') {
                 this.createChat();
               }
             }}

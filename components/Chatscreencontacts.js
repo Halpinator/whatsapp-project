@@ -1,55 +1,22 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { res } from 'react-email-validator';
-import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableHighlight, TouchableOpacity } from 'react-native';
 
 class ContactItem extends Component {
-  constructor(props){
-    super(props);
-    this.state ={ 
-      isLoading: true,
-      contactListData: [],
-      user_id: '',
-      chat_id: '',
-      chatData: ''
-    }
-  }
-
   handleAddButton = (contact) => {
     const user_id = contact.user_id;
     this.props.addUser(user_id);
   };
 
-  removeContact = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/contact',
-    {
-      method: 'DELETE',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
-    })
-    .then(async (response) => {
-      console.log(response)
-      const rText = await response.text();
-      console.log(rText);
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  }
-
   render() {
     const { item, onPress } = this.props;
-
-    const { first_name, last_name} = item;
-
-    const navigation = this.props.navigation;
+    const { first_name, last_name } = item;
 
     return (
       <TouchableHighlight underlayColor="#ddd" onPress={() => onPress(item)}>
         <View style={styles.contactItem}>
           <View style={styles.contactInfo}>
-            <Text style={styles.contactName}>{first_name + " " +  last_name}</Text>
+            <Text style={styles.contactName}>{first_name + " " + last_name}</Text>
           </View>
           <TouchableOpacity style={styles.addButton} onPress={() => this.handleAddButton(item)}>
             <Text style={styles.addButtonText}>Add</Text>
@@ -65,8 +32,7 @@ class ChatScreenContacts extends Component {
     super(props);
     this.state = {
       userData: [],
-      user_id: '',
-      selectedContacts: []
+      chat_id: '',
     };
   }
 
@@ -75,44 +41,38 @@ class ChatScreenContacts extends Component {
   };
 
   renderContactItem = ({ item }) => (
-    <ContactItem item={item} onPress={this.handleContactPress} getContacts={this.getContacts} addUser={this.addUser}/>
+    <ContactItem item={item} onPress={this.handleContactPress} addUser={this.addUser} />
   );
 
-  async componentDidMount(){
+  async componentDidMount() {
     const chat_id = await AsyncStorage.getItem("whatsthat_chat_id");
     this.setState({ chat_id });
-  
+
     this.checkLoggedIn();
     const userContacts = await this.getContacts();
     const chatData = await this.loadChatData(chat_id);
     const chatMembers = chatData.members;
-  
-    const { name, creator, members } = chatData;
-  
-    console.log(members);
-  
-    // Filter out any contacts that are already in the chat.
+
     const addableContacts = userContacts.filter(contact => {
       return !chatMembers.find(member => member.user_id === contact.user_id);
     });
-  
+
     this.setState({ userData: addableContacts });
-  
+
     this.unsubscribe = this.props.navigation.addListener('focus', async () => {
       this.checkLoggedIn();
       const userContacts = await this.getContacts();
       const chatData = await this.loadChatData(chat_id);
       const chatMembers = chatData.members;
-  
-      // Filter out any contacts that are already in the chat.
+
       const addableContacts = userContacts.filter(contact => {
         return !chatMembers.find(member => member.user_id === contact.user_id);
       });
-  
+
       this.setState({ userData: addableContacts });
     });
   }
-  
+
   componentWillUnmount() {
     this.unsubscribe();
   }
@@ -120,29 +80,28 @@ class ChatScreenContacts extends Component {
   checkLoggedIn = async () => {
     const value = await AsyncStorage.getItem('whatsthat_session_token');
     if (value == null) {
-      this.props.navigation.navigate('Login')
+      this.props.navigation.navigate('Login');
     }
   }
 
   getContacts = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/contacts',
-    {
-      method: 'GET',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+    try {
+      const response = await fetch('http://127.0.0.1:3333/api/1.0.0/contacts', {
+        method: 'GET',
+        headers: {
+          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
+        },
+      });
+
+      if (response.status === 200) {
+        const rJson = await response.json();
+        return rJson;
+      } else {
+        console.error("Failed to get contacts. Status:", response.status);
       }
-    })
-    .then(async (response) => {
-      console.log(response.status)
-      console.log(response.statusText)
-      const rJson = await response.json();
-      console.log(rJson);
-      //this.setState({ userData: rJson });
-      return rJson; // return the contacts
-    })
-    .catch((error) => {
+    } catch (error) {
       console.error(error);
-    });
+    }
   }
 
   logout = async () => {
@@ -228,20 +187,18 @@ class ChatScreenContacts extends Component {
       } else if (response.status === 401) {
         this.setState({ error: 'Unauthorized', loading: false });
       } else {
-        this.setState({ error: 'An error occurred', loading: false });
+        console.error("Failed to load chat data. ", response.status);
       }
     } catch (error) {
       console.error(error);
-      this.setState({ error: 'An error occurred', loading: false });
     }
   }
 
   goToSearch = () => {
-    this.props.navigation.navigate('Contactsearch')
+    this.props.navigation.navigate('Contactsearch');
   }
 
   render() {
-
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -272,39 +229,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#ddd',
   },
-  profilePic: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 12,
-  },
   contactInfo: {
     flex: 1,
   },
   contactName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  lastMessage: {
-    fontSize: 16,
-    color: '#777',
-  },
-  messageTime: {
-    fontSize: 12,
-    color: '#777',
-    marginLeft: 12,
-  },
-  button: {
-    width: '100%',
-    height: 50,
-    backgroundColor: '#007bff',
-    borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  buttonText: {
-    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -332,16 +260,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'left',
     flex: 1,
-  },
-  removeButton: {
-    backgroundColor: 'red',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 5,
-  },
-  removeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
   },
 });
 
