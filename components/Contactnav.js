@@ -484,8 +484,8 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   contactInitialsContainer: {
-    width: 40,
-    height: 40,
+    width: 50,
+    height: 50,
     borderRadius: 25,
     backgroundColor: 'grey',
     justifyContent: 'center',
@@ -503,8 +503,8 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   headerInitialsContainer: {
-    width: 40,
-    height: 40,
+    width: 50,
+    height: 50,
     borderRadius: 20,
     backgroundColor: 'white',
     justifyContent: 'center',
