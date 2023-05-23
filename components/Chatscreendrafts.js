@@ -1,48 +1,53 @@
+/* eslint-disable max-classes-per-file */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { res } from 'react-email-validator';
-import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity, TextInput, Button, ScrollView } from 'react-native';
+import {
+  StyleSheet, Text, View, TouchableOpacity, TextInput, ScrollView,
+} from 'react-native';
 import DatePicker from 'react-datepicker';
-import "react-datepicker/dist/react-datepicker.css";
+import 'react-datepicker/dist/react-datepicker.css';
 
 class DraftItem extends Component {
-  constructor(props){
+  constructor(props) {
     super(props);
-    this.state = { 
+    this.state = {
       text: this.props.text,
       isEditing: false,
       isScheduling: false,
       date: new Date(),
       hasBeenScheduled: false,
-    }
+    };
   }
 
   handleSendButton = () => this.props.onSend(this.props.id);
-  handleEditButton = () => this.setState({isEditing: true});
-  handleScheduleButton = () => this.setState({isScheduling: true});
+
+  handleEditButton = () => this.setState({ isEditing: true });
+
+  handleScheduleButton = () => this.setState({ isScheduling: true });
+
   handleDeleteButton = () => this.props.onDelete(this.props.id);
 
   handleDateChange = (selectedDate) => {
     const currentDate = selectedDate || this.state.date;
-    
+
     const timeUntilSend = currentDate.getTime() - Date.now();
-  
+
     if (timeUntilSend > 0) {
-      this.setState({date: currentDate, isScheduling: false, hasBeenScheduled: true});
-  
+      this.setState({ date: currentDate, isScheduling: false, hasBeenScheduled: true });
+
       setTimeout(() => {
         this.handleSendButton();
       }, timeUntilSend);
     } else {
       console.error('Selected time is in the past');
-      this.setState({hasBeenScheduled: false});
+      this.setState({ hasBeenScheduled: false });
     }
   };
-  
-  handleChangeText = (text) => this.setState({text});
+
+  handleChangeText = (text) => this.setState({ text });
 
   handleDoneButton = () => {
-    this.setState({isEditing: false});
+    this.setState({ isEditing: false });
     this.props.onEdit(this.props.id, this.state.text);
   };
 
@@ -58,7 +63,7 @@ class DraftItem extends Component {
           dateFormat="Pp"
         />
       );
-    } else if (this.state.isEditing) {
+    } if (this.state.isEditing) {
       return (
         <View style={styles.draftItem}>
           <TextInput style={styles.draftInput} value={this.state.text} onChangeText={this.handleChangeText} />
@@ -70,44 +75,45 @@ class DraftItem extends Component {
           </TouchableOpacity>
         </View>
       );
-    } else {
-      return (
-        <View style={styles.draftItem}>
-          <Text style={styles.draftText}>{this.state.text}</Text>
-          {this.state.hasBeenScheduled && (
-              <Text style={styles.dateText}>
-                Scheduled for: {this.state.date.toLocaleString()}
-              </Text>
-          )}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={this.handleScheduleButton}
-            >
-              <Text style={styles.actionButtonText}>Schedule</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={this.handleEditButton}
-            >
-              <Text style={styles.actionButtonText}>Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={this.handleDeleteButton}
-            >
-              <Text style={styles.actionButtonText}>Delete</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={this.handleSendButton}
-            >
-              <Text style={styles.actionButtonText}>Send</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      );
     }
+    return (
+      <View style={styles.draftItem}>
+        <Text style={styles.draftText}>{this.state.text}</Text>
+        {this.state.hasBeenScheduled && (
+          <Text style={styles.dateText}>
+            Scheduled for:
+            {' '}
+            {this.state.date.toLocaleString()}
+          </Text>
+        )}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={this.handleScheduleButton}
+          >
+            <Text style={styles.actionButtonText}>Schedule</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={this.handleEditButton}
+          >
+            <Text style={styles.actionButtonText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={this.handleDeleteButton}
+          >
+            <Text style={styles.actionButtonText}>Delete</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={this.handleSendButton}
+          >
+            <Text style={styles.actionButtonText}>Send</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   }
 }
 
@@ -118,54 +124,70 @@ class ChatScreenContacts extends Component {
       drafts: [],
       text: '',
       chat_id: '',
-      user_id: '',
     };
   }
 
-  sendMessages = async (message) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/message',
+  async componentDidMount() {
+    const drafts = await AsyncStorage.getItem('drafts');
+
+    if (drafts) {
+      this.setState({ drafts: JSON.parse(drafts) });
+    }
+
+    const chat_id = await AsyncStorage.getItem('whatsthat_chat_id');
+    this.setState({ chat_id });
+
+    this.checkLoggedIn();
+
+    this.unsubscribe = this.props.navigation.addListener('focus', async () => {
+      this.checkLoggedIn();
+    });
+  }
+
+  sendMessages = async (message) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/chat/${this.state.chat_id}/message`,
     {
-        method: 'POST',
-        headers: { 
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: message.text,
-        })
-    })
+      method: 'POST',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: message.text,
+      }),
+    },
+  )
     .then(async (response) => {
-        if (response.status === 200) {
-          console.log("Successfully sent message")
-        } else if (response.status === 400) {
-          console.log('Bad Request');
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 403) {
-          console.log('Forbidden');
-        } else if (response.status === 404) {
-          console.log('Not Found');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          console.log('Something went wrong');
-        }
+      if (response.status === 200) {
+        console.log('Successfully sent message');
+      } else if (response.status === 400) {
+        console.log('Bad Request');
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 403) {
+        console.log('Forbidden');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
     .catch((error) => {
       console.error(error);
     });
-  }
 
   checkLoggedIn = async () => {
     const value = await AsyncStorage.getItem('whatsthat_session_token');
     if (value == null) {
-      this.props.navigation.navigate('Login')
+      this.props.navigation.navigate('Login');
     }
-  }
+  };
 
   handleAddButton = () => {
     if (this.state.text.trim() === '') {
-      return; 
+      return;
     }
 
     const newDraft = {
@@ -195,7 +217,7 @@ class ChatScreenContacts extends Component {
 
   handleEditButton = (id, text) => {
     this.setState((prevState) => ({
-      drafts: prevState.drafts.map((draft) => draft.id === id ? {...draft, text} : draft),
+      drafts: prevState.drafts.map((draft) => (draft.id === id ? { ...draft, text } : draft)),
     }), () => {
       AsyncStorage.setItem('drafts', JSON.stringify(this.state.drafts));
     });
@@ -209,25 +231,7 @@ class ChatScreenContacts extends Component {
     });
   };
 
-  handleChangeText = (text) => this.setState({text});
-
-  async componentDidMount(){
-    const drafts = await AsyncStorage.getItem('drafts');
-
-    if (drafts) {
-      this.setState({ drafts: JSON.parse(drafts) });
-    }
-
-    const chat_id = await AsyncStorage.getItem("whatsthat_chat_id");
-    const user_id = await AsyncStorage.getItem("whatsthat_user_id");
-    this.setState({ chat_id });
-  
-    this.checkLoggedIn();
-
-    this.unsubscribe = this.props.navigation.addListener('focus', async () => {
-      this.checkLoggedIn();
-    });
-  }
+  handleChangeText = (text) => this.setState({ text });
 
   render() {
     return (
@@ -237,11 +241,11 @@ class ChatScreenContacts extends Component {
         </View>
         <ScrollView style={styles.drafts}>
           {this.state.drafts.map((draft) => (
-            <DraftItem 
-              key={draft.id} 
-              id={draft.id} 
-              text={draft.text} 
-              onSend={this.handleSendButton} 
+            <DraftItem
+              key={draft.id}
+              id={draft.id}
+              text={draft.text}
+              onSend={this.handleSendButton}
               onEdit={this.handleEditButton}
               onDelete={this.handleDeleteButton}
             />
@@ -428,7 +432,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     height: 50,
-    backgroundColor: '#ff0000',  // you can adjust the color as you prefer
+    backgroundColor: '#ff0000', // you can adjust the color as you prefer
     borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',

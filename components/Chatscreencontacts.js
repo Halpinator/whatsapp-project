@@ -1,13 +1,14 @@
+/* eslint-disable max-classes-per-file */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableHighlight, TouchableOpacity, Image } from 'react-native';
+import {
+  StyleSheet, Text, View, FlatList, TouchableHighlight, TouchableOpacity, Image,
+} from 'react-native';
 
 class ContactItem extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      isLoading: true,
-      user_id: '',
       photo: null,
     };
   }
@@ -17,43 +18,42 @@ class ContactItem extends Component {
     this.getProfileImage(item.user_id);
   }
 
-  getProfileImage = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
+  getProfileImage = async (userId) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/user/${userId}/photo`,
     {
       method: 'GET',
       headers: {
         'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
       },
+    },
+  )
+    .then(async (response) => {
+      if (response.status === 200) {
+        console.log('Photo successfully pulled');
+        const resBlob = await response.blob();
+        const data = URL.createObjectURL(resBlob);
+        console.log(data);
+
+        this.setState({
+          photo: data,
+        });
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
-      .then(async (response) => {
-        if (response.status === 200) {
-          console.log('Photo successfully pulled');
-          const resBlob = await response.blob();
-          const data = URL.createObjectURL(resBlob);
-          console.log(data);
-          
-          this.setState({
-            photo: data,
-            isLoading: false
-        })
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 404) {
-          console.log('Not Found');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          console.log('Something went wrong');
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        this.setState({photo: null});
-      });
-  };
+    .catch((error) => {
+      console.error(error);
+      this.setState({ photo: null });
+    });
 
   handleAddButton = (contact) => {
-    const user_id = contact.user_id;
+    const { user_id } = contact;
     this.props.addUser(user_id);
   };
 
@@ -74,7 +74,7 @@ class ContactItem extends Component {
             </View>
           )}
           <View style={styles.contactInfo}>
-            <Text style={styles.contactName}>{first_name + " " + last_name}</Text>
+            <Text style={styles.contactName}>{`${first_name} ${last_name}`}</Text>
           </View>
           <TouchableOpacity style={styles.addButton} onPress={() => this.handleAddButton(item)}>
             <Text style={styles.addButtonText}>Add</Text>
@@ -94,16 +94,8 @@ class ChatScreenContacts extends Component {
     };
   }
 
-  handleContactPress = (contact) => {
-    const user_id = contact.user_id;
-  };
-
-  renderContactItem = ({ item }) => (
-    <ContactItem item={item} onPress={this.handleContactPress} addUser={this.addUser} />
-  );
-
   async componentDidMount() {
-    const chat_id = await AsyncStorage.getItem("whatsthat_chat_id");
+    const chat_id = await AsyncStorage.getItem('whatsthat_chat_id');
     this.setState({ chat_id });
 
     this.checkLoggedIn();
@@ -111,9 +103,7 @@ class ChatScreenContacts extends Component {
     const chatData = await this.loadChatData(chat_id);
     const chatMembers = chatData.members;
 
-    const addableContacts = userContacts.filter(contact => {
-      return !chatMembers.find(member => member.user_id === contact.user_id);
-    });
+    const addableContacts = userContacts.filter((contact) => !chatMembers.find((member) => member.user_id === contact.user_id));
 
     this.setState({ userData: addableContacts });
 
@@ -123,9 +113,7 @@ class ChatScreenContacts extends Component {
       const chatData = await this.loadChatData(chat_id);
       const chatMembers = chatData.members;
 
-      const addableContacts = userContacts.filter(contact => {
-        return !chatMembers.find(member => member.user_id === contact.user_id);
-      });
+      const addableContacts = userContacts.filter((contact) => !chatMembers.find((member) => member.user_id === contact.user_id));
 
       this.setState({ userData: addableContacts });
     });
@@ -135,130 +123,100 @@ class ChatScreenContacts extends Component {
     this.unsubscribe();
   }
 
+  handleContactPress = (contact) => {
+    const { user_id } = contact;
+  };
+
+  renderContactItem = ({ item }) => (
+    <ContactItem item={item} onPress={this.handleContactPress} addUser={this.addUser} />
+  );
+
   checkLoggedIn = async () => {
     const value = await AsyncStorage.getItem('whatsthat_session_token');
     if (value == null) {
       this.props.navigation.navigate('Login');
     }
-  }
-
-  getContacts = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/contacts',
-    {
-      method: 'GET',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
-    })
-    .then(async (response) => {
-      if (response.status === 200) {
-        console.log('Sucessfully got contacts')
-        const rJson = await response.json();
-        return rJson; // return the contacts
-      } else if (response.status === 401) {
-        console.log('Unauthorized')
-      } else if (response.status === 500) {
-        console.log('Server Error')
-      } else {
-        console.log('Something went wrong')
-      }
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  }
-
-  logout = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/logout',
-    {
-        method: 'POST',
-        headers: { 
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-        }
-    })
-    .then(async (response) => {
-        if (response.status === 200) {
-            await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_user_id")
-            this.props.navigation.navigate('Login')
-        } else if (response.status === 401) {
-            console.log("Unauthorised")
-            await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_user_id")
-            this.props.navigation.navigate('Login')
-        } else if (response.status === 500) {
-          console.log("Server Error")
-        } else {
-            this.setState({ error: 'An error has occured' });
-        }
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  }
-
-  addUser = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + this.state.chat_id + '/user/' + user_id,
-    {
-        method: 'POST',
-        headers: { 
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
-          "Content-Type": "application/json"
-        },
-    })
-    .then(async (response) => {
-        if (response.status === 200) {
-          console.log("User added successfully");
-
-          const userContacts = await this.getContacts();
-          const chatData = await this.loadChatData(this.state.chat_id);
-          const chatMembers = chatData.members;
-
-          const { name, creator, members } = chatData;
-
-          console.log(members);
-
-          // Filter out any contacts that are already in the chat.
-          const addableContacts = userContacts.filter(contact => {
-            return !chatMembers.find(member => member.user_id === contact.user_id);
-          });
-
-          this.setState({ userData: addableContacts });
-        } else if (response.status === 400) {
-          console.log('Bad Request');
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 403) {
-          console.log('Forbidden');
-        } else if (response.status === 404) {
-          console.log('Not Found');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          this.setState({ error: 'An error has occured' });
-          this.setState({errorDetails: `Status: ${response.status}, Status Text: ${response.statusText}`});
-        }
-    })
-    .catch((error) => {
-      console.error(error);
-      console.log("Response Body: ", error.response.text());
-    });
   };
 
-  loadChatData = async (chat_id) => {
-    try {
-      const response = await fetch('http://127.0.0.1:3333/api/1.0.0/chat/' + chat_id, {
-        method: 'GET',
-        headers: {
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
-        },
-      });
-
+  getContacts = async () => fetch(
+    'http://127.0.0.1:3333/api/1.0.0/contacts',
+    {
+      method: 'GET',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
+    },
+  )
+    .then(async (response) => {
       if (response.status === 200) {
-        console.log('Successfully loaded chat')
-        const chatData = await response.json();
-        this.setState({ chatData, loading: false });
-        return chatData;
+        console.log('Sucessfully got contacts');
+        const rJson = await response.json();
+        return rJson; // return the contacts
+      } if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+
+  logout = async () => fetch(
+    'http://127.0.0.1:3333/api/1.0.0/logout',
+    {
+      method: 'POST',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
+    },
+  )
+    .then(async (response) => {
+      if (response.status === 200) {
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        this.props.navigation.navigate('Login');
+      } else if (response.status === 401) {
+        console.log('Unauthorised');
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        this.props.navigation.navigate('Login');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+
+  addUser = async (userId) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/chat/${this.state.chat_id}/user/${userId}`,
+    {
+      method: 'POST',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        'Content-Type': 'application/json',
+      },
+    },
+  )
+    .then(async (response) => {
+      if (response.status === 200) {
+        console.log('User added successfully');
+
+        const userContacts = await this.getContacts();
+        const chatData = await this.loadChatData(this.state.chat_id);
+        const chatMembers = chatData.members;
+
+        // Filter out any contacts that are already in the chat.
+        const addableContacts = userContacts.filter((contact) => !chatMembers.find((member) => member.user_id === contact.user_id));
+
+        this.setState({ userData: addableContacts });
+      } else if (response.status === 400) {
+        console.log('Bad Request');
       } else if (response.status === 401) {
         console.log('Unauthorized');
       } else if (response.status === 403) {
@@ -268,16 +226,47 @@ class ChatScreenContacts extends Component {
       } else if (response.status === 500) {
         console.log('Server Error');
       } else {
-        console.error("Something went wrong", response.status);
+        console.log('An error has occured');
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      console.log('Response Body: ', error.response.text());
+    });
+
+  loadChatData = async (chatId) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:3333/api/1.0.0/chat/${chatId}`, {
+        method: 'GET',
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        },
+      });
+
+      if (response.status === 200) {
+        console.log('Successfully loaded chat');
+        const chatData = await response.json();
+        this.setState({ chatData, loading: false });
+        return chatData;
+      } if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 403) {
+        console.log('Forbidden');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.error('Something went wrong', response.status);
       }
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
   goToSearch = () => {
     this.props.navigation.navigate('Contactsearch');
-  }
+  };
 
   render() {
     return (

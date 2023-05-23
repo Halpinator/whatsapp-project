@@ -1,24 +1,25 @@
 import React, { Component } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class SignupScreen extends Component {
-  
   constructor(props) {
     super(props);
     this.state = {
-        email: '',
-        password: '',
-        error: ''
+      email: '',
+      password: '',
+      error: '',
     };
   }
 
-  componentDidMount(){
+  componentDidMount() {
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
       this.checkLoggedIn();
     });
   }
-  
+
   componentWillUnmount() {
     this.unsubscribe();
   }
@@ -26,54 +27,9 @@ class SignupScreen extends Component {
   checkLoggedIn = async () => {
     const value = await AsyncStorage.getItem('whatsthat_session_token');
     if (value != null) {
-      this.props.navigation.navigate('Apptab')
+      this.props.navigation.navigate('Apptab');
     }
-  }
-
-  login(){
-    return fetch('http://127.0.0.1:3333/api/1.0.0/login',
-    {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-        email: this.state.email,
-        password: this.state.password
-      })
-    })
-    .then((response) => {
-        if (response.status === 200) {
-            this.setState({ error: 'Login Successful!' });
-            return response.json();
-        } else if (response.status === 400) {
-            this.setState({ error: 'Incorrect email or passowrd' });
-        } else if (response.status === 401) {
-          this.setState({ error: 'Unauthorised' });
-        } else if (response.status === 403) {
-          this.setState({ error: 'Forbidden' });
-        } else if (response.status === 404) {
-          this.setState({ error: 'Not Found' });
-        } else if (response.status === 500) {
-            this.setState({ error: 'Server error 500' });
-        } else {
-            this.setState({ error: 'An error has occured' });
-        }
-    })
-    .then(async (rJson) => {
-        console.log(rJson)
-        try{
-            await AsyncStorage.setItem("whatsthat_user_id", rJson.id)
-            await AsyncStorage.setItem("whatsthat_session_token", rJson.token)
-            
-            this.props.navigation.navigate('Appnav')
-
-        }catch{
-            throw "Something went wrong"
-        }
-      })
-    .catch((error) => {
-      console.error(error);
-    });
-  }
+  };
 
   handleLogin = () => {
     const { email, password } = this.state;
@@ -82,6 +38,52 @@ class SignupScreen extends Component {
     } else {
       this.login();
     }
+  };
+
+  login() {
+    return fetch(
+      'http://127.0.0.1:3333/api/1.0.0/login',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: this.state.email,
+          password: this.state.password,
+        }),
+      },
+    )
+      .then((response) => {
+        if (response.status === 200) {
+          this.setState({ error: 'Login Successful!' });
+          return response.json();
+        } if (response.status === 400) {
+          this.setState({ error: 'Incorrect email or passowrd' });
+        } else if (response.status === 401) {
+          this.setState({ error: 'Unauthorised' });
+        } else if (response.status === 403) {
+          this.setState({ error: 'Forbidden' });
+        } else if (response.status === 404) {
+          this.setState({ error: 'Not Found' });
+        } else if (response.status === 500) {
+          this.setState({ error: 'Server error 500' });
+        } else {
+          this.setState({ error: 'An error has occured' });
+        }
+      })
+      .then(async (rJson) => {
+        console.log(rJson);
+        try {
+          await AsyncStorage.setItem('whatsthat_user_id', rJson.id);
+          await AsyncStorage.setItem('whatsthat_session_token', rJson.token);
+
+          this.props.navigation.navigate('Appnav');
+        } catch {
+          this.setState({ error: 'An error has occured' });
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   }
 
   render() {
@@ -90,16 +92,16 @@ class SignupScreen extends Component {
     return (
       <View style={styles.container}>
         <Text style={styles.heading}>Login Page</Text>
-        <TextInput 
+        <TextInput
           style={styles.input}
           placeholder="Email"
           value={email}
           onChangeText={(value) => this.setState({ email: value })}
         />
-        <TextInput 
+        <TextInput
           style={styles.input}
           placeholder="Password"
-          secureTextEntry={true}
+          secureTextEntry
           value={password}
           onChangeText={(value) => this.setState({ password: value })}
         />

@@ -1,13 +1,14 @@
+/* eslint-disable max-classes-per-file */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { Component, useState } from 'react';
-import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity, TextInput } from 'react-native';
+import React, { Component } from 'react';
+import {
+  StyleSheet, Text, View, FlatList, TouchableHighlight, TouchableOpacity, TextInput,
+} from 'react-native';
 
 class ChatItem extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      isLoading: true,
-      contactListData: [],
       userId: '',
     };
   }
@@ -22,14 +23,11 @@ class ChatItem extends Component {
     const { name, last_message } = item;
     const { userId } = this.state;
 
-    const navigation = this.props.navigation;
-
     let lastMessageComponent;
     if (last_message && last_message.author) {
-      lastMessageComponent =
-        userId === last_message.author.user_id
-          ? 'You: ' + last_message.message
-          : last_message.author.first_name + ': ' + last_message.message;
+      lastMessageComponent = userId === last_message.author.user_id
+        ? `You: ${last_message.message}`
+        : `${last_message.author.first_name}: ${last_message.message}`;
     } else {
       lastMessageComponent = 'No message';
     }
@@ -57,13 +55,6 @@ class ChatNavPage extends Component {
     };
   }
 
-  handleChatPress = (chat) => {
-    AsyncStorage.setItem('whatsthat_chat_id', chat.chat_id);
-    this.props.navigation.navigate('Chattab');
-  };
-
-  renderChatItem = ({ item }) => <ChatItem item={item} onPress={this.handleChatPress} />;
-
   async componentDidMount() {
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
       this.checkLoggedIn();
@@ -75,6 +66,13 @@ class ChatNavPage extends Component {
     this.unsubscribe();
   }
 
+  handleChatPress = (chat) => {
+    AsyncStorage.setItem('whatsthat_chat_id', chat.chat_id);
+    this.props.navigation.navigate('Chattab');
+  };
+
+  renderChatItem = ({ item }) => <ChatItem item={item} onPress={this.handleChatPress} />;
+
   checkLoggedIn = async () => {
     const value = await AsyncStorage.getItem('whatsthat_session_token');
     if (value == null) {
@@ -82,61 +80,57 @@ class ChatNavPage extends Component {
     }
   };
 
-  getChats = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/chat', {
-      method: 'GET',
-      headers: {
-        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-      },
+  getChats = async () => fetch('http://127.0.0.1:3333/api/1.0.0/chat', {
+    method: 'GET',
+    headers: {
+      'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+    },
+  })
+    .then(async (response) => {
+      if (response.status === 200) {
+        console.log('Successfully got chats');
+        const rJson = await response.json();
+        this.setState({ chatData: rJson });
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
-      .then(async (response) => {
-        if (response.status === 200) {
-          console.log('Successfully got chats');
-          const rJson = await response.json();
-          this.setState({ chatData: rJson });
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          console.log('Something went wrong');
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  };
+    .catch((error) => {
+      console.error(error);
+    });
 
-  createChat = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/chat', {
-      method: 'POST',
-      headers: {
-        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name: this.state.newChatName,
-      }),
+  createChat = async () => fetch('http://127.0.0.1:3333/api/1.0.0/chat', {
+    method: 'POST',
+    headers: {
+      'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      name: this.state.newChatName,
+    }),
+  })
+    .then(async (response) => {
+      if (response.status === 201) {
+        console.log('Successfully created a new chat');
+        this.setState({ newChatName: '' });
+      } else if (response.status === 400) {
+        console.log('Bad request');
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
+      await this.getChats();
     })
-      .then(async (response) => {
-        if (response.status === 201) {
-          console.log('Successfully created a new chat');
-          this.setState({ newChatName: '' });
-        } else if (response.status === 400) {
-          console.log('Bad request');
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          console.log('Something went wrong');
-        }
-        await this.getChats();
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  };
+    .catch((error) => {
+      console.error(error);
+    });
 
   render() {
     return (

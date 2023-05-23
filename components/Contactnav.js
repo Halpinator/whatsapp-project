@@ -1,14 +1,14 @@
+/* eslint-disable max-classes-per-file */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { res } from 'react-email-validator';
-import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity } from 'react-native';
+import {
+  StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity,
+} from 'react-native';
 
 class ContactItem extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      isLoading: true,
-      user_id: '',
       photo: null,
     };
   }
@@ -18,60 +18,59 @@ class ContactItem extends Component {
     this.getProfileImage(item.user_id);
   }
 
-  getProfileImage = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
+  getProfileImage = async (userId) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/user/${userId}/photo`,
     {
       method: 'GET',
       headers: {
         'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
       },
+    },
+  )
+    .then(async (response) => {
+      if (response.status === 200) {
+        console.log('Photo successfully pulled');
+        const resBlob = await response.blob();
+        const data = URL.createObjectURL(resBlob);
+        console.log(data);
+
+        this.setState({
+          photo: data,
+        });
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
-      .then(async (response) => {
-        if (response.status === 200) {
-          console.log('Photo successfully pulled');
-          const resBlob = await response.blob();
-          const data = URL.createObjectURL(resBlob);
-          console.log(data);
-          
-          this.setState({
-            photo: data,
-            isLoading: false
-        })
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 404) {
-          console.log('Not Found');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          console.log('Something went wrong');
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        this.setState({photo: null});
-      });
-  };
+    .catch((error) => {
+      console.error(error);
+      this.setState({ photo: null });
+    });
 
   handleRemoveButton = (contact) => {
-    const user_id = contact.user_id;
+    const { user_id } = contact;
     this.removeContact(user_id).then(() => {
       this.props.getContacts();
     });
   };
 
-  removeContact = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/contact',
+  removeContact = async (userId) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/user/${userId}/contact`,
     {
       method: 'DELETE',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
-    })
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
+    },
+  )
     .then(async (response) => {
       if (response.status === 200) {
-        console.log('Successfully removed contact')
-        const rText = await response.text();
+        console.log('Successfully removed contact');
       } else if (response.status === 400) {
         console.log('You cant remove yourself as a contact');
       } else if (response.status === 401) {
@@ -89,26 +88,26 @@ class ContactItem extends Component {
     .catch((error) => {
       console.error(error);
     });
-  };
 
   handleBlockButton = (contact) => {
-    const user_id = contact.user_id;
+    const { user_id } = contact;
     this.blockContact(user_id).then(() => {
       this.props.getContacts();
     });
   };
 
-  blockContact = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/block',
+  blockContact = async (userId) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/user/${userId}/block`,
     {
       method: 'POST',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
-    })
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
+    },
+  )
     .then(async (response) => {
       if (response.status === 200) {
-        console.log(response)
+        console.log(response);
         const rText = await response.text();
         console.log(rText);
       } else if (response.status === 400) {
@@ -126,7 +125,6 @@ class ContactItem extends Component {
     .catch((error) => {
       console.error(error);
     });
-  };
 
   render() {
     const { item, onPress } = this.props;
@@ -163,15 +161,13 @@ class ContactsPage extends Component {
     super(props);
     this.state = {
       userData: [],
-      user_id: '',
-      selectedContacts: [],
       currentUserInfo: [],
       photo: null,
     };
   }
 
   handleContactPress = (contact) => {
-    const user_id = contact.user_id;
+    const { user_id } = contact;
   };
 
   renderContactItem = ({ item }) => (
@@ -180,11 +176,11 @@ class ContactsPage extends Component {
 
   async componentDidMount() {
     this.unsubscribe = this.props.navigation.addListener('focus', async () => {
-      const user_id = await AsyncStorage.getItem('whatsthat_user_id');
+      const userId = await AsyncStorage.getItem('whatsthat_user_id');
       this.checkLoggedIn();
       this.getContacts();
-      this.getUserInfo(user_id);
-      this.getProfileImage(user_id);
+      this.getUserInfo(userId);
+      this.getProfileImage(userId);
     });
   }
 
@@ -199,17 +195,18 @@ class ContactsPage extends Component {
     }
   };
 
-  getContacts = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/contacts',
+  getContacts = async () => fetch(
+    'http://127.0.0.1:3333/api/1.0.0/contacts',
     {
       method: 'GET',
-      headers: { 
-        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token')
-      }
-    })
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
+    },
+  )
     .then(async (response) => {
       if (response.status === 200) {
-        console.log('Sucessfully loaded contacts')
+        console.log('Sucessfully loaded contacts');
         const rJson = await response.json();
         this.setState({ userData: rJson });
       } else if (response.status === 401) {
@@ -223,20 +220,20 @@ class ContactsPage extends Component {
     .catch((error) => {
       console.error(error);
     });
-  }
 
-  getUserInfo = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id,
+  getUserInfo = async (userId) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/user/${userId}`,
     {
       method: 'GET',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
-    })
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
+    },
+  )
     .then(async (response) => {
       if (response.status === 200) {
-        console.log('Successfully loaded user data')
-        console.log(response.statusText)
+        console.log('Successfully loaded user data');
+        console.log(response.statusText);
         const rJson = await response.json();
         console.log(rJson);
         this.setState({ currentUserInfo: rJson });
@@ -253,86 +250,79 @@ class ContactsPage extends Component {
     .catch((error) => {
       console.error(error);
     });
-  }
 
-  getProfileImage = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
+  getProfileImage = async (userId) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/user/${userId}/photo`,
     {
       method: 'GET',
       headers: {
         'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
       },
-    })
-      .then(async (response) => {
-        if (response.status === 200) {
-          console.log('Photo successfully pulled');
-          const resBlob = await response.blob();
-          const data = URL.createObjectURL(resBlob);
-          console.log(data);
-          
-          this.setState({
-            photo: data,
-            isLoading: false
-        })
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 404) {
-          console.log('Not Found');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          console.log('Something went wrong');
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        this.setState({photo: null});
-      });
-  };
-
-  logout = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/logout',
-    {
-        method: 'POST',
-        headers: { 
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-        }
-    })
+    },
+  )
     .then(async (response) => {
-        if(response.status === 200) {
-            await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_user_id")
-            this.props.navigation.navigate('Login')
-        }else if (response.status === 401) {
-            console.log("Unauthorised")
-            await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_user_id")
-            this.props.navigation.navigate('Login')
-        }else if (response.status === 401) {
-            console.log("Server error")
-            await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_user_id")
-            this.props.navigation.navigate('Login')
-        }else{
-            this.setState({ error: 'An error has occured' });
-        }
+      if (response.status === 200) {
+        console.log('Photo successfully pulled');
+        const resBlob = await response.blob();
+        const data = URL.createObjectURL(resBlob);
+        console.log(data);
+
+        this.setState({
+          photo: data,
+        });
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      this.setState({ photo: null });
+    });
+
+  logout = async () => fetch(
+    'http://127.0.0.1:3333/api/1.0.0/logout',
+    {
+      method: 'POST',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
+    },
+  )
+    .then(async (response) => {
+      if (response.status === 200) {
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        this.props.navigation.navigate('Login');
+      } else if (response.status === 401) {
+        console.log('Unauthorised');
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        this.props.navigation.navigate('Login');
+      } else if (response.status === 500) {
+        console.log('Server error');
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        this.props.navigation.navigate('Login');
+      } else {
+        console.log({ error: 'An error has occured' });
+      }
     })
     .catch((error) => {
       console.error(error);
     });
-  }
-
-  goToSearch = () => {
-    this.props.navigation.navigate('Contactsearch');
-  };
 
   render() {
     const { currentUserInfo, photo } = this.state;
     const { first_name, last_name } = currentUserInfo || {};
-    const initials =
-      currentUserInfo.first_name && currentUserInfo.last_name
-        ? currentUserInfo.first_name[0] + currentUserInfo.last_name[0]
-        : '';
+    const initials = currentUserInfo.first_name && currentUserInfo.last_name
+      ? currentUserInfo.first_name[0] + currentUserInfo.last_name[0]
+      : '';
 
     return (
       <View style={styles.container}>
@@ -346,7 +336,11 @@ class ContactsPage extends Component {
               </View>
             )}
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Hi {first_name}</Text>
+          <Text style={styles.headerTitle}>
+            Hi
+            {' '}
+            {first_name}
+          </Text>
           <TouchableOpacity style={styles.blockListButton} onPress={() => this.props.navigation.navigate('Blocklistnav')}>
             <Text style={styles.blockListButtonText}>Block List</Text>
           </TouchableOpacity>

@@ -1,14 +1,15 @@
+/* eslint-disable max-classes-per-file */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity } from 'react-native';
+import {
+  StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity,
+} from 'react-native';
 
 class ContactItem extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      user_id: '',
       photo: null,
-      isLoading: true,
     };
   }
 
@@ -18,75 +19,73 @@ class ContactItem extends Component {
   }
 
   handleUnblockButton = (contact) => {
-    const user_id = contact.user_id;
+    const { user_id } = contact;
     this.unblockContact(user_id).then(() => {
       this.props.getBlockList();
     });
   };
 
-  unblockContact = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/block',
+  unblockContact = async (userId) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/user/${userId}/block`,
     {
       method: 'DELETE',
       headers: {
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
+    },
+  )
+    .then(async (response) => {
+      if (response.status === 200) {
+        console.log('Successfully unblocked user');
+      } else if (response.status === 400) {
+        console.log('You cant unblock yourself');
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
       }
     })
-      .then(async (response) => {
-        if (response.status === 200) {
-          console.log('Successfully unblocked user');
-          const rText = await response.text();
-        } else if (response.status === 400) {
-          console.log('You cant unblock yourself');
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 404) {
-          console.log('Not Found');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          console.log('Something went wrong');
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }
+    .catch((error) => {
+      console.error(error);
+    });
 
-  getProfileImage = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
+  getProfileImage = async (userId) => fetch(
+    `http://127.0.0.1:3333/api/1.0.0/user/${userId}/photo`,
     {
       method: 'GET',
       headers: {
         'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
       },
+    },
+  )
+    .then(async (response) => {
+      if (response.status === 200) {
+        console.log('Photo successfully pulled');
+        const resBlob = await response.blob();
+        const data = URL.createObjectURL(resBlob);
+        console.log(data);
+
+        this.setState({
+          photo: data,
+        });
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
-      .then(async (response) => {
-        if (response.status === 200) {
-          console.log('Photo successfully pulled');
-          const resBlob = await response.blob();
-          const data = URL.createObjectURL(resBlob);
-          console.log(data);
-          
-          this.setState({
-            photo: data,
-            isLoading: false
-        })
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 404) {
-          console.log('Not Found');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          console.log('Something went wrong');
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        this.setState({photo: null});
-      });
-  };
+    .catch((error) => {
+      console.error(error);
+      this.setState({ photo: null });
+    });
 
   render() {
     const { item, onPress } = this.props;
@@ -105,7 +104,7 @@ class ContactItem extends Component {
             </View>
           )}
           <View style={styles.contactInfo}>
-            <Text style={styles.contactName}>{first_name + " " + last_name}</Text>
+            <Text style={styles.contactName}>{`${first_name} ${last_name}`}</Text>
           </View>
           <TouchableOpacity style={styles.unblockButton} onPress={() => this.handleUnblockButton(item)}>
             <Text style={styles.unblockButtonText}>Unblock</Text>
@@ -121,18 +120,8 @@ class BlockedContactsPage extends Component {
     super(props);
     this.state = {
       userData: [],
-      user_id: '',
-      selectedContacts: []
     };
   }
-
-  handleContactPress = (contact) => {
-    const user_id = contact.user_id;
-  };
-
-  renderContactItem = ({ item }) => (
-    <ContactItem item={item} onPress={this.handleContactPress} getBlockList={this.getBlockList} />
-  );
 
   componentDidMount() {
     this.unsubscribe = this.props.navigation.addListener('focus', () => {
@@ -145,73 +134,81 @@ class BlockedContactsPage extends Component {
     this.unsubscribe();
   }
 
+  handleContactPress = (contact) => {
+    const { user_id } = contact;
+  };
+
+  renderContactItem = ({ item }) => (
+    <ContactItem item={item} onPress={this.handleContactPress} getBlockList={this.getBlockList} />
+  );
+
   checkLoggedIn = async () => {
     const value = await AsyncStorage.getItem('whatsthat_session_token');
     if (value == null) {
-      this.props.navigation.navigate('Login')
+      this.props.navigation.navigate('Login');
     }
-  }
+  };
 
-  getBlockList = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/blocked',
+  getBlockList = async () => fetch(
+    'http://127.0.0.1:3333/api/1.0.0/blocked',
     {
       method: 'GET',
       headers: {
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
-    })
-      .then(async (response) => {
-        if (response.status === 200) {
-          console.log('Succesfully loaded blocklist');
-          const rJson = await response.json();
-          console.log(rJson);
-          this.setState({ userData: rJson });
-        } else if (response.status === 401) {
-          console.log('Unauthorized');
-        } else if (response.status === 500) {
-          console.log('Server Error');
-        } else {
-          console.log('Something went wrong');
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }
-
-  logout = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/logout',
-    {
-        method: 'POST',
-        headers: { 
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-        }
-    })
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
+    },
+  )
     .then(async (response) => {
-        if(response.status === 200) {
-            await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_user_id")
-            this.props.navigation.navigate('Login')
-        }else if (response.status === 401) {
-            console.log("Unauthorised")
-            await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_user_id")
-            this.props.navigation.navigate('Login')
-        }else if (response.status === 401) {
-            console.log("Server error")
-            await AsyncStorage.removeItem("whatsthat_session_token")
-            await AsyncStorage.removeItem("whatsthat_user_id")
-            this.props.navigation.navigate('Login')
-        }else{
-            this.setState({ error: 'An error has occured' });
-        }
+      if (response.status === 200) {
+        console.log('Succesfully loaded blocklist');
+        const rJson = await response.json();
+        console.log(rJson);
+        this.setState({ userData: rJson });
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
     .catch((error) => {
       console.error(error);
     });
-  }
 
-  goToSearch = () => { this.props.navigation.navigate('Contactsearch'); }
+  logout = async () => fetch(
+    'http://127.0.0.1:3333/api/1.0.0/logout',
+    {
+      method: 'POST',
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
+    },
+  )
+    .then(async (response) => {
+      if (response.status === 200) {
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        this.props.navigation.navigate('Login');
+      } else if (response.status === 401) {
+        console.log('Unauthorised');
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        this.props.navigation.navigate('Login');
+      } else if (response.status === 401) {
+        console.log('Server error');
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        this.props.navigation.navigate('Login');
+      } else {
+        console.log('Something went wrong');
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+
+  goToSearch = () => { this.props.navigation.navigate('Contactsearch'); };
 
   render() {
     return (

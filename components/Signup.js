@@ -1,90 +1,97 @@
 import React, { Component } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+} from 'react-native';
 
 class SignupScreen extends Component {
-  
   constructor(props) {
     super(props);
     this.state = {
-      first_name: '',
-      last_name: '',
+      firstName: '',
+      lastName: '',
       email: '',
       password: '',
-      error: ''
+      error: '',
     };
   }
 
-  signUp(){
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        first_name: this.state.first_name,
-        last_name: this.state.last_name,
-        email: this.state.email,
-        password: this.state.password
-      })
-    })
-    .then((response) => {
-      if(response.status === 201) {
-        return response.json();
-      }else if (response.status === 400) {
-        console.log('Email already exists or password isnt strong enough');
-      }else if (response.status === 500) {
-        console.log('Server Error');
-      }else{
-        console.log('An error has occured');
-      }
-    })
-    .then(async (rJson) => {
-      console.log(rJson)
-      this.setState({ error: 'User successfully registered' });
-      this.props.navigation.navigate('Login')
-    })
-    .catch((error) => {
-      console.error(error);
-      this.setState({ error: 'An error has occured' });
-    });
-  }
-
   handleSignup = () => {
-    const { first_name, last_name, email, password } = this.state;
-    if (!first_name || !last_name || !email || !password) {
+    const {
+      firstName, lastName, email, password,
+    } = this.state;
+    if (!firstName || !lastName || !email || !password) {
       this.setState({ error: 'Please fill out all fields.' });
     } else {
       this.signUp();
     }
+  };
+
+  signUp() {
+    return fetch(
+      'http://127.0.0.1:3333/api/1.0.0/user',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: this.state.firstName,
+          last_name: this.state.lastName,
+          email: this.state.email,
+          password: this.state.password,
+        }),
+      },
+    )
+      .then((response) => {
+        if (response.status === 201) {
+          return response.json();
+        } if (response.status === 400) {
+          console.log('Email already exists or password isnt strong enough');
+        } else if (response.status === 500) {
+          console.log('Server Error');
+        } else {
+          console.log('An error has occured');
+        }
+      })
+      .then(async (rJson) => {
+        console.log(rJson);
+        this.setState({ error: 'User successfully registered' });
+        this.props.navigation.navigate('Login');
+      })
+      .catch((error) => {
+        console.error(error);
+        this.setState({ error: 'An error has occured' });
+      });
   }
 
   render() {
-    const { first_name, last_name, email, password, error } = this.state;
+    const {
+      firstName, lastName, email, password, error,
+    } = this.state;
 
     return (
       <View style={styles.container}>
         <Text style={styles.heading}>Sign Up Page</Text>
-        <TextInput 
+        <TextInput
           style={styles.input}
           placeholder="First Name"
-          value={first_name}
+          value={firstName}
           onChangeText={(value) => this.setState({ first_name: value })}
         />
-        <TextInput 
+        <TextInput
           style={styles.input}
           placeholder="Surname"
-          value={last_name}
+          value={lastName}
           onChangeText={(value) => this.setState({ last_name: value })}
         />
-        <TextInput 
+        <TextInput
           style={styles.input}
           placeholder="Email"
           value={email}
           onChangeText={(value) => this.setState({ email: value })}
         />
-        <TextInput 
+        <TextInput
           style={styles.input}
           placeholder="Password"
-          secureTextEntry={true}
+          secureTextEntry
           value={password}
           onChangeText={(value) => this.setState({ password: value })}
         />

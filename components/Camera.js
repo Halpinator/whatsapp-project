@@ -1,6 +1,8 @@
 import { Camera, CameraType, PermissionStatus } from 'expo-camera';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, Button } from 'react-native';
+import {
+  StyleSheet, Text, TouchableOpacity, View,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App(props) {
@@ -16,40 +18,41 @@ export default function App(props) {
   }, []);
 
   function toggleCameraType() {
-    setType(current => (current === CameraType.back ? CameraType.front : CameraType.back));
-    console.log("Camera: ", type)
+    setType((current) => (current === CameraType.back ? CameraType.front : CameraType.back));
+    console.log('Camera: ', type);
   }
 
-  async function takePhoto(){
-    if(camera){
-        const options = {quality: 0.5, base64: true, onPictureSaved: (data) => sendToServer(data)}
-        const data = await camera.takePictureAsync(options)
+  async function takePhoto() {
+    if (camera) {
+      const options = { quality: 0.5, base64: true, onPictureSaved: (data) => sendToServer(data) };
+      const data = await camera.takePictureAsync(options);
 
-        console.log(data.uri)
+      console.log(data.uri);
     }
   }
 
+  async function sendToServer(data) {
+    console.log('HERE', data.uri);
 
-  async function sendToServer(data){
-    console.log("HERE", data.uri)
+    const userId = await AsyncStorage.getItem('whatsthat_user_id');
 
-    const user_id = await AsyncStorage.getItem("whatsthat_user_id");
+    const res = await fetch(data.uri);
+    const blob = await res.blob();
 
-    let res = await fetch(data.uri);
-    let blob = await res.blob()
-
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
-    {
+    return fetch(
+      `http://127.0.0.1:3333/api/1.0.0/user/${userId}/photo`,
+      {
         method: 'POST',
-        headers: { 
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
-          "Content-Type": "image/png"
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+          'Content-Type': 'image/png',
         },
-        body: blob
-    })
-    .then(async (response) => {
-        if(response.status === 200) {
-          console.log("Picture added", response)
+        body: blob,
+      },
+    )
+      .then(async (response) => {
+        if (response.status === 200) {
+          console.log('Picture added', response);
         } else if (response.status === 400) {
           console.log('Bad Request');
         } else if (response.status === 401) {
@@ -63,47 +66,46 @@ export default function App(props) {
         } else {
           console.log('Something went wrong');
         }
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   }
-  
-  if(permission === null){
+
+  if (permission === null) {
     return (
       <View style={styles.centeredContainer}>
         <Text style={styles.centeredText}>Waiting for permission...</Text>
-        <TouchableOpacity style={styles.returnButton} onPress={() => props.navigation.goBack()} >
-            <Text style={styles.returnText}>Go Back</Text>
+        <TouchableOpacity style={styles.returnButton} onPress={() => props.navigation.goBack()}>
+          <Text style={styles.returnText}>Go Back</Text>
         </TouchableOpacity>
       </View>
     );
-  } else if (!permission) {
+  } if (!permission) {
     return (
       <View style={styles.centeredContainer}>
-      <Text style={styles.centeredText}>Cannot access camera</Text>
-      <TouchableOpacity style={styles.returnButton} onPress={() => props.navigation.goBack()} >
+        <Text style={styles.centeredText}>Cannot access camera</Text>
+        <TouchableOpacity style={styles.returnButton} onPress={() => props.navigation.goBack()}>
           <Text style={styles.returnText}>Return to menu</Text>
-      </TouchableOpacity>
-    </View>
-      );
-  } else {
-    return (
-      <View style={styles.container}>
-        <Camera style={styles.camera} type={type} ref={ref => setCamera(ref)}>
-          <View style={styles.buttonContainer}>
-           <TouchableOpacity style={styles.backButton} onPress={() => props.navigation.goBack()}>
-              <Text style={styles.text}>Go Back</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.captureButton} onPress={takePhoto} />
-            <TouchableOpacity style={styles.flipButton} onPress={toggleCameraType}>
-              <Text style={styles.text}>Flip Camera</Text>
-            </TouchableOpacity>
-          </View>
-        </Camera>
+        </TouchableOpacity>
       </View>
     );
-  }  
+  }
+  return (
+    <View style={styles.container}>
+      <Camera style={styles.camera} type={type} ref={(ref) => setCamera(ref)}>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.backButton} onPress={() => props.navigation.goBack()}>
+            <Text style={styles.text}>Go Back</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.captureButton} onPress={takePhoto} />
+          <TouchableOpacity style={styles.flipButton} onPress={toggleCameraType}>
+            <Text style={styles.text}>Flip Camera</Text>
+          </TouchableOpacity>
+        </View>
+      </Camera>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -156,7 +158,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20
+    paddingHorizontal: 20,
   },
   centeredText: {
     textAlign: 'center',
@@ -178,5 +180,4 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-})
-
+});
