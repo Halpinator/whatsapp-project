@@ -556,7 +556,7 @@ class ChatScreen extends Component {
           <TouchableOpacity
             style={styles.sendMessageButton}
             onPress={() => {
-              if (this.state.newMessage.trim() !== '') {
+              if ((this.state.newMessage.trim() !== '') || (this.state.editingMessageText.trim() !== '')) {
                 this.state.isEditing ? this.updateMessage(this.state.editingMessageId) : this.sendMessages()
               }
             }}
