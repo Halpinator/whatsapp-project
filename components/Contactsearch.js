@@ -101,10 +101,20 @@ class ContactsSearchPage extends Component {
       }
     })
     .then(async (response) => {
-      console.log(response)
-      const rJson = await response.json();
-      console.log(rJson);
-      return rJson; // return the contacts
+      if (response.status === 200) {
+        console.log(response)
+        const rJson = await response.json();
+        console.log(rJson);
+        return rJson; // return the contacts
+      } else if (response.status === 400) {
+        console.log('Bad Request');
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
     .catch((error) => {
       console.error(error);
@@ -124,7 +134,21 @@ class ContactsSearchPage extends Component {
     })
     .then(async (response) => {
       console.log(response)
-      this.updateContactList();
+      
+      if (response.status === 200) {
+        console.log('Sucessfully added')
+        this.updateContactList();
+      } else if (response.status === 400) {
+        console.log('You cant add yourself as a contact');
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
     .catch((error) => {
       console.error(error);
@@ -140,11 +164,17 @@ class ContactsSearchPage extends Component {
       }
     })
     .then(async (response) => {
-      console.log(response.status)
-      console.log(response.statusText)
-      const rJson = await response.json();
-      console.log(rJson);
-      return rJson; // return the contacts
+      if (response.status === 200) {
+        console.log('Sucessfully got contacts')
+        const rJson = await response.json();
+        return rJson; // return the contacts
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
     .catch((error) => {
       console.error(error);

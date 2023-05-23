@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component, useState } from 'react';
-import { res } from 'react-email-validator';
 import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity, TextInput } from 'react-native';
 
 class ChatItem extends Component {
@@ -91,10 +90,17 @@ class ChatNavPage extends Component {
       },
     })
       .then(async (response) => {
-        console.log(response);
-        const rJson = await response.json();
-        console.log(rJson);
-        this.setState({ chatData: rJson });
+        if (response.status === 200) {
+          console.log('Successfully got chats');
+          const rJson = await response.json();
+          this.setState({ chatData: rJson });
+        } else if (response.status === 401) {
+          console.log('Unauthorized');
+        } else if (response.status === 500) {
+          console.log('Server Error');
+        } else {
+          console.log('Something went wrong');
+        }
       })
       .catch((error) => {
         console.error(error);
@@ -114,39 +120,18 @@ class ChatNavPage extends Component {
     })
       .then(async (response) => {
         if (response.status === 201) {
+          console.log('Successfully created a new chat');
           this.setState({ newChatName: '' });
+        } else if (response.status === 400) {
+          console.log('Bad request');
         } else if (response.status === 401) {
-          console.log('Unauthorised');
+          console.log('Unauthorized');
+        } else if (response.status === 500) {
+          console.log('Server Error');
         } else {
-          this.setState({ error: 'An error has occurred' });
+          console.log('Something went wrong');
         }
         await this.getChats();
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  };
-
-  logout = async () => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/logout', {
-      method: 'POST',
-      headers: {
-        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-      },
-    })
-      .then(async (response) => {
-        if (response.status === 200) {
-          await AsyncStorage.removeItem('whatsthat_session_token');
-          await AsyncStorage.removeItem('whatsthat_user_id');
-          this.props.navigation.navigate('Login');
-        } else if (response.status === 401) {
-          console.log('Unauthorised');
-          await AsyncStorage.removeItem('whatsthat_session_token');
-          await AsyncStorage.removeItem('whatsthat_user_id');
-          this.props.navigation.navigate('Login');
-        } else {
-          this.setState({ error: 'An error has occurred' });
-        }
       })
       .catch((error) => {
         console.error(error);

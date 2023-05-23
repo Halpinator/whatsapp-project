@@ -30,9 +30,11 @@ class SignupScreen extends Component {
       if(response.status === 201) {
         return response.json();
       }else if (response.status === 400) {
-        throw "Email already exists or password isn't strong enough"
+        console.log('Email already exists or password isnt strong enough');
+      }else if (response.status === 500) {
+        console.log('Server Error');
       }else{
-        throw "An error has occured"
+        console.log('An error has occured');
       }
     })
     .then(async (rJson) => {

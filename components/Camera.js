@@ -50,10 +50,18 @@ export default function App(props) {
     .then(async (response) => {
         if(response.status === 200) {
           console.log("Picture added", response)
-        }else if (response.status === 401) {
-          console.log("Unauthorised")
-        }else{
-          console.log('An error has occured');
+        } else if (response.status === 400) {
+          console.log('Bad Request');
+        } else if (response.status === 401) {
+          console.log('Unauthorized');
+        } else if (response.status === 403) {
+          console.log('Forbidden');
+        } else if (response.status === 404) {
+          console.log('Not Found');
+        } else if (response.status === 500) {
+          console.log('Server Error');
+        } else {
+          console.log('Something went wrong');
         }
     })
     .catch((error) => {
@@ -65,8 +73,8 @@ export default function App(props) {
     return (
       <View style={styles.centeredContainer}>
         <Text style={styles.centeredText}>Waiting for permission...</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => props.navigation.goBack()} >
-            <Text style={styles.backButtonText}>Go Back</Text>
+        <TouchableOpacity style={styles.returnButton} onPress={() => props.navigation.goBack()} >
+            <Text style={styles.returnText}>Go Back</Text>
         </TouchableOpacity>
       </View>
     );
@@ -74,77 +82,101 @@ export default function App(props) {
     return (
       <View style={styles.centeredContainer}>
       <Text style={styles.centeredText}>Cannot access camera</Text>
-      <TouchableOpacity style={styles.backButton} onPress={() => props.navigation.goBack()} >
-          <Text style={styles.backButtonText}>Go Back</Text>
+      <TouchableOpacity style={styles.returnButton} onPress={() => props.navigation.goBack()} >
+          <Text style={styles.returnText}>Return to menu</Text>
       </TouchableOpacity>
     </View>
       );
   } else {
     return (
-        <View style={styles.container}>
-          <Camera style={styles.camera} type={type} ref={ref => setCamera(ref)}>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.button} onPress={toggleCameraType}>
-                <Text style={styles.text}>Flip Camera</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.button} onPress={takePhoto}>
-                    <Text style={styles.text}>Take Photo</Text>
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.button} onPress={() => props.navigation.goBack()}>
-                  <Text style={styles.text}>Go Back</Text>
-              </TouchableOpacity>
-            </View>
-          </Camera>
-        </View>
+      <View style={styles.container}>
+        <Camera style={styles.camera} type={type} ref={ref => setCamera(ref)}>
+          <View style={styles.buttonContainer}>
+           <TouchableOpacity style={styles.backButton} onPress={() => props.navigation.goBack()}>
+              <Text style={styles.text}>Go Back</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.captureButton} onPress={takePhoto} />
+            <TouchableOpacity style={styles.flipButton} onPress={toggleCameraType}>
+              <Text style={styles.text}>Flip Camera</Text>
+            </TouchableOpacity>
+          </View>
+        </Camera>
+      </View>
     );
   }  
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1
-    },
-    buttonContainer: {
-        alignSelf: 'flex-end',
-        padding: 5,
-        margin: 5,
-        backgroundColor: 'steelblue'
-    },
-    button: {
-        width: '100%',
-        height: '100%'
-    },
-    text: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: '#ddd'
-    },
-    centeredContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: 20
-    },
-    centeredText: {
-      textAlign: 'center',
-      marginBottom: 20,
-      fontSize: 30,
-    },
-    backButton: {
-      backgroundColor: '#007bff',
-      padding: 10,
-      borderRadius: 5,
-    },
-    backButtonText: {
-      fontSize: 16,
-      color: '#fff',
-      fontWeight: 'bold',
-    },
+  container: {
+    flex: 1,
+  },
+  camera: {
+    flex: 1,
+  },
+  text: {
+    fontSize: 18,
+    color: '#fff',
+  },
+  buttonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    flexDirection: 'row',
+    flex: 1,
+    alignItems: 'center',
+    width: '100%',
+    padding: 20,
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  flipButton: {
+    flex: 1,
+    backgroundColor: '007bff',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  captureButton: {
+    alignItems: 'center',
+    bottom: 0,
+    height: 80,
+    width: 80,
+    borderWidth: 2,
+    borderColor: '#fff',
+    borderRadius: 40,
+    backgroundColor: 'transparent',
+  },
+  backButton: {
+    flex: 1,
+    backgroundColor: '007bff',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  centeredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20
+  },
+  centeredText: {
+    textAlign: 'center',
+    marginBottom: 20,
+    fontSize: 30,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  returnButton: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+  },
+  returnText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 })
 

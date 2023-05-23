@@ -3,31 +3,6 @@ import React, { Component } from 'react';
 import { StyleSheet, Text, View, FlatList, Image, TouchableHighlight, TouchableOpacity } from 'react-native';
 
 class ContactItem extends Component {
-  handleRemoveButton = (contact) => {
-    const user_id = contact.user_id;
-    this.removeContact(user_id).then(() => {
-      this.props.getBlockList();
-    });
-  };
-
-  removeContact = async (user_id) => {
-    return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/contact',
-    {
-      method: 'DELETE',
-      headers: {
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
-    })
-      .then(async (response) => {
-        console.log(response);
-        const rText = await response.text();
-        console.log(rText);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }
-
   handleUnblockButton = (contact) => {
     const user_id = contact.user_id;
     this.unblockContact(user_id).then(() => {
@@ -44,9 +19,20 @@ class ContactItem extends Component {
       }
     })
       .then(async (response) => {
-        console.log(response);
-        const rText = await response.text();
-        console.log(rText);
+        if (response.status === 200) {
+          console.log('Successfully unblocked user');
+          const rText = await response.text();
+        } else if (response.status === 400) {
+          console.log('You cant unblock yourself');
+        } else if (response.status === 401) {
+          console.log('Unauthorized');
+        } else if (response.status === 404) {
+          console.log('Not Found');
+        } else if (response.status === 500) {
+          console.log('Server Error');
+        } else {
+          console.log('Something went wrong');
+        }
       })
       .catch((error) => {
         console.error(error);
@@ -117,11 +103,18 @@ class BlockedContactsPage extends Component {
       }
     })
       .then(async (response) => {
-        console.log(response.status);
-        console.log(response.statusText);
-        const rJson = await response.json();
-        console.log(rJson);
-        this.setState({ userData: rJson });
+        if (response.status === 200) {
+          console.log('Succesfully loaded blocklist');
+          const rJson = await response.json();
+          console.log(rJson);
+          this.setState({ userData: rJson });
+        } else if (response.status === 401) {
+          console.log('Unauthorized');
+        } else if (response.status === 500) {
+          console.log('Server Error');
+        } else {
+          console.log('Something went wrong');
+        }
       })
       .catch((error) => {
         console.error(error);
@@ -131,28 +124,33 @@ class BlockedContactsPage extends Component {
   logout = async () => {
     return fetch('http://127.0.0.1:3333/api/1.0.0/logout',
     {
-      method: 'POST',
-      headers: {
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
-    })
-      .then(async (response) => {
-        if (response.status === 200) {
-          await AsyncStorage.removeItem("whatsthat_session_token");
-          await AsyncStorage.removeItem("whatsthat_user_id");
-          this.props.navigation.navigate('Login');
-        } else if (response.status === 401) {
-          console.log("Unauthorised");
-          await AsyncStorage.removeItem("whatsthat_session_token");
-          await AsyncStorage.removeItem("whatsthat_user_id");
-          this.props.navigation.navigate('Login');
-        } else {
-          this.setState({ error: 'An error has occurred' });
+        method: 'POST',
+        headers: { 
+          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
         }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    })
+    .then(async (response) => {
+        if(response.status === 200) {
+            await AsyncStorage.removeItem("whatsthat_session_token")
+            await AsyncStorage.removeItem("whatsthat_user_id")
+            this.props.navigation.navigate('Login')
+        }else if (response.status === 401) {
+            console.log("Unauthorised")
+            await AsyncStorage.removeItem("whatsthat_session_token")
+            await AsyncStorage.removeItem("whatsthat_user_id")
+            this.props.navigation.navigate('Login')
+        }else if (response.status === 401) {
+            console.log("Server error")
+            await AsyncStorage.removeItem("whatsthat_session_token")
+            await AsyncStorage.removeItem("whatsthat_user_id")
+            this.props.navigation.navigate('Login')
+        }else{
+            this.setState({ error: 'An error has occured' });
+        }
+    })
+    .catch((error) => {
+      console.error(error);
+    });
   }
 
   goToSearch = () => { this.props.navigation.navigate('Contactsearch'); }

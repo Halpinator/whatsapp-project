@@ -22,24 +22,35 @@ class ContactItem extends Component {
     return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
     {
       method: 'GET',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
     })
-    .then(async (response) => {
-      return response.blob();
-    })
-    .then((resBlob) => {
-      let data = URL.createObjectURL(resBlob);
-      this.setState({
-          photo: data,
-          isLoading: false
+      .then(async (response) => {
+        if (response.status === 200) {
+          console.log('Photo successfully pulled');
+          const resBlob = await response.blob();
+          const data = URL.createObjectURL(resBlob);
+          console.log(data);
+          
+          this.setState({
+            photo: data,
+            isLoading: false
+        })
+        } else if (response.status === 401) {
+          console.log('Unauthorized');
+        } else if (response.status === 404) {
+          console.log('Not Found');
+        } else if (response.status === 500) {
+          console.log('Server Error');
+        } else {
+          console.log('Something went wrong');
+        }
       })
-    })
-    .catch((error) => {
-      console.error(error);
-      this.setState({photo: null});
-    });
+      .catch((error) => {
+        console.error(error);
+        this.setState({photo: null});
+      });
   };
 
   handleRemoveButton = (contact) => {
@@ -58,9 +69,22 @@ class ContactItem extends Component {
       }
     })
     .then(async (response) => {
-      console.log(response)
-      const rText = await response.text();
-      console.log(rText);
+      if (response.status === 200) {
+        console.log('Successfully removed contact')
+        const rText = await response.text();
+      } else if (response.status === 400) {
+        console.log('You cant remove yourself as a contact');
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 403) {
+        console.log('Forbidden');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
     .catch((error) => {
       console.error(error);
@@ -83,9 +107,21 @@ class ContactItem extends Component {
       }
     })
     .then(async (response) => {
-      console.log(response)
-      const rText = await response.text();
-      console.log(rText);
+      if (response.status === 200) {
+        console.log(response)
+        const rText = await response.text();
+        console.log(rText);
+      } else if (response.status === 400) {
+        console.log('You cant block yourself');
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
     .catch((error) => {
       console.error(error);
@@ -168,15 +204,21 @@ class ContactsPage extends Component {
     {
       method: 'GET',
       headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token')
       }
     })
     .then(async (response) => {
-      console.log(response.status)
-      console.log(response.statusText)
-      const rJson = await response.json();
-      console.log(rJson);
-      this.setState({ userData: rJson });
+      if (response.status === 200) {
+        console.log('Sucessfully loaded contacts')
+        const rJson = await response.json();
+        this.setState({ userData: rJson });
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
     .catch((error) => {
       console.error(error);
@@ -192,11 +234,21 @@ class ContactsPage extends Component {
       }
     })
     .then(async (response) => {
-      console.log(response.status)
-      console.log(response.statusText)
-      const rJson = await response.json();
-      console.log(rJson);
-      this.setState({ currentUserInfo: rJson });
+      if (response.status === 200) {
+        console.log('Successfully loaded user data')
+        console.log(response.statusText)
+        const rJson = await response.json();
+        console.log(rJson);
+        this.setState({ currentUserInfo: rJson });
+      } else if (response.status === 401) {
+        console.log('Unauthorized');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
+      } else {
+        console.log('Something went wrong');
+      }
     })
     .catch((error) => {
       console.error(error);
@@ -207,28 +259,36 @@ class ContactsPage extends Component {
     return fetch('http://127.0.0.1:3333/api/1.0.0/user/' + user_id + '/photo',
     {
       method: 'GET',
-      headers: { 
-        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-      }
+      headers: {
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
     })
-    .then(async (response) => {
-      console.log(response);
-
-      return response.blob();
-    })
-    .then((resBlob) => {
-      let data = URL.createObjectURL(resBlob);
-
-      this.setState({
-          photo: data,
-          isLoading: false
+      .then(async (response) => {
+        if (response.status === 200) {
+          console.log('Photo successfully pulled');
+          const resBlob = await response.blob();
+          const data = URL.createObjectURL(resBlob);
+          console.log(data);
+          
+          this.setState({
+            photo: data,
+            isLoading: false
+        })
+        } else if (response.status === 401) {
+          console.log('Unauthorized');
+        } else if (response.status === 404) {
+          console.log('Not Found');
+        } else if (response.status === 500) {
+          console.log('Server Error');
+        } else {
+          console.log('Something went wrong');
+        }
       })
-    })
-    .catch((error) => {
-      console.error(error);
-      this.setState({photo: null});
-    });
-  }
+      .catch((error) => {
+        console.error(error);
+        this.setState({photo: null});
+      });
+  };
 
   logout = async () => {
     return fetch('http://127.0.0.1:3333/api/1.0.0/logout',
@@ -245,6 +305,11 @@ class ContactsPage extends Component {
             this.props.navigation.navigate('Login')
         }else if (response.status === 401) {
             console.log("Unauthorised")
+            await AsyncStorage.removeItem("whatsthat_session_token")
+            await AsyncStorage.removeItem("whatsthat_user_id")
+            this.props.navigation.navigate('Login')
+        }else if (response.status === 401) {
+            console.log("Server error")
             await AsyncStorage.removeItem("whatsthat_session_token")
             await AsyncStorage.removeItem("whatsthat_user_id")
             this.props.navigation.navigate('Login')

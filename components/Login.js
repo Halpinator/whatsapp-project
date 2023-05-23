@@ -41,14 +41,20 @@ class SignupScreen extends Component {
       })
     })
     .then((response) => {
-        if(response.status === 200) {
+        if (response.status === 200) {
             this.setState({ error: 'Login Successful!' });
             return response.json();
-        }else if (response.status === 400) {
+        } else if (response.status === 400) {
             this.setState({ error: 'Incorrect email or passowrd' });
-        }else if (response.status === 500) {
+        } else if (response.status === 401) {
+          this.setState({ error: 'Unauthorised' });
+        } else if (response.status === 403) {
+          this.setState({ error: 'Forbidden' });
+        } else if (response.status === 404) {
+          this.setState({ error: 'Not Found' });
+        } else if (response.status === 500) {
             this.setState({ error: 'Server error 500' });
-        }else{
+        } else {
             this.setState({ error: 'An error has occured' });
         }
     })

@@ -85,23 +85,29 @@ class ChatScreenContacts extends Component {
   }
 
   getContacts = async () => {
-    try {
-      const response = await fetch('http://127.0.0.1:3333/api/1.0.0/contacts', {
-        method: 'GET',
-        headers: {
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
-        },
-      });
-
-      if (response.status === 200) {
-        const rJson = await response.json();
-        return rJson;
-      } else {
-        console.error("Failed to get contacts. Status:", response.status);
+    return fetch('http://127.0.0.1:3333/api/1.0.0/contacts',
+    {
+      method: 'GET',
+      headers: { 
+        "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
       }
-    } catch (error) {
+    })
+    .then(async (response) => {
+      if (response.status === 200) {
+        console.log('Sucessfully got contacts')
+        const rJson = await response.json();
+        return rJson; // return the contacts
+      } else if (response.status === 401) {
+        console.log('Unauthorized')
+      } else if (response.status === 500) {
+        console.log('Server Error')
+      } else {
+        console.log('Something went wrong')
+      }
+    })
+    .catch((error) => {
       console.error(error);
-    }
+    });
   }
 
   logout = async () => {
@@ -113,16 +119,18 @@ class ChatScreenContacts extends Component {
         }
     })
     .then(async (response) => {
-        if(response.status === 200) {
+        if (response.status === 200) {
             await AsyncStorage.removeItem("whatsthat_session_token")
             await AsyncStorage.removeItem("whatsthat_user_id")
             this.props.navigation.navigate('Login')
-        }else if (response.status === 401) {
+        } else if (response.status === 401) {
             console.log("Unauthorised")
             await AsyncStorage.removeItem("whatsthat_session_token")
             await AsyncStorage.removeItem("whatsthat_user_id")
             this.props.navigation.navigate('Login')
-        }else{
+        } else if (response.status === 500) {
+          console.log("Server Error")
+        } else {
             this.setState({ error: 'An error has occured' });
         }
     })
@@ -141,8 +149,8 @@ class ChatScreenContacts extends Component {
         },
     })
     .then(async (response) => {
-        if(response.status === 200) {
-          console.log("User added.");
+        if (response.status === 200) {
+          console.log("User added successfully");
 
           const userContacts = await this.getContacts();
           const chatData = await this.loadChatData(this.state.chat_id);
@@ -158,9 +166,17 @@ class ChatScreenContacts extends Component {
           });
 
           this.setState({ userData: addableContacts });
-        }else if (response.status === 401) {
-          console.log("Unauthorised")
-        }else{
+        } else if (response.status === 400) {
+          console.log('Bad Request');
+        } else if (response.status === 401) {
+          console.log('Unauthorized');
+        } else if (response.status === 403) {
+          console.log('Forbidden');
+        } else if (response.status === 404) {
+          console.log('Not Found');
+        } else if (response.status === 500) {
+          console.log('Server Error');
+        } else {
           this.setState({ error: 'An error has occured' });
           this.setState({errorDetails: `Status: ${response.status}, Status Text: ${response.statusText}`});
         }
@@ -181,13 +197,20 @@ class ChatScreenContacts extends Component {
       });
 
       if (response.status === 200) {
+        console.log('Successfully loaded chat')
         const chatData = await response.json();
         this.setState({ chatData, loading: false });
         return chatData;
       } else if (response.status === 401) {
-        this.setState({ error: 'Unauthorized', loading: false });
+        console.log('Unauthorized');
+      } else if (response.status === 403) {
+        console.log('Forbidden');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else if (response.status === 500) {
+        console.log('Server Error');
       } else {
-        console.error("Failed to load chat data. ", response.status);
+        console.error("Something went wrong", response.status);
       }
     } catch (error) {
       console.error(error);
