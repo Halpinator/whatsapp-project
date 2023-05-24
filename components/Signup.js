@@ -74,13 +74,13 @@ class SignupScreen extends Component {
           style={styles.input}
           placeholder="First Name"
           value={firstName}
-          onChangeText={(value) => this.setState({ first_name: value })}
+          onChangeText={(value) => this.setState({ firstName: value })}
         />
         <TextInput
           style={styles.input}
           placeholder="Surname"
           value={lastName}
-          onChangeText={(value) => this.setState({ last_name: value })}
+          onChangeText={(value) => this.setState({ lastName: value })}
         />
         <TextInput
           style={styles.input}

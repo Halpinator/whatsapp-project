@@ -273,7 +273,7 @@ class ChatScreen extends Component {
         console.log('User successfully removed.');
 
         const currentUserId = parseInt(await AsyncStorage.getItem('whatsthat_user_id'));
-        const deletedUserId = parseInt(user_id);
+        const deletedUserId = parseInt(userId);
 
         if (deletedUserId === currentUserId) {
           this.props.navigation.navigate('Chatnav');
