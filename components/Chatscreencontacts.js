@@ -1,4 +1,3 @@
-/* eslint-disable max-classes-per-file */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { Component } from 'react';
 import {
@@ -151,7 +150,7 @@ class ChatScreenContacts extends Component {
       if (response.status === 200) {
         console.log('Sucessfully got contacts');
         const rJson = await response.json();
-        return rJson; // return the contacts
+        return rJson;
       } if (response.status === 401) {
         console.log('Unauthorized');
       } else if (response.status === 500) {
@@ -211,7 +210,6 @@ class ChatScreenContacts extends Component {
         const chatData = await this.loadChatData(this.state.chat_id);
         const chatMembers = chatData.members;
 
-        // Filter out any contacts that are already in the chat.
         const addableContacts = userContacts.filter((contact) => !chatMembers.find((member) => member.user_id === contact.user_id));
 
         this.setState({ userData: addableContacts });
